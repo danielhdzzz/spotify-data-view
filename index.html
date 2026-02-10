@@ -189,6 +189,28 @@ body {
   padding: 8px 20px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+#dedup-label {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+#dedup-label:hover { color: var(--text); }
+
+#dedup-toggle {
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
 #track-filter {
@@ -366,6 +388,7 @@ body {
   </div>
   <div id="track-filter-wrap">
     <input type="text" id="track-filter" placeholder="filter tracks..." spellcheck="false" />
+    <label id="dedup-label"><input type="checkbox" id="dedup-toggle" />hide duplicates</label>
   </div>
   <div id="col-header">
     <span class="col-num">#</span>
@@ -418,6 +441,8 @@ body {
   const $trackFilterWrap = document.getElementById('track-filter-wrap');
   const $statsBar = document.getElementById('stats-bar');
   const $backBtn = document.getElementById('back-btn');
+  const $dedupToggle = document.getElementById('dedup-toggle');
+  const $dedupLabel = document.getElementById('dedup-label');
 
   // ── Data Loading ──
   async function loadData() {
@@ -623,6 +648,8 @@ body {
     // Show track columns
     $colHeader.style.display = '';
     $trackFilter.placeholder = 'filter tracks...';
+    $dedupLabel.style.display = 'none';
+    $dedupToggle.checked = false;
 
     // Load tracks
     if (id === 'liked') {
@@ -656,6 +683,8 @@ body {
     $colHeader.style.display = 'none';
     $trackFilter.value = '';
     $trackFilter.placeholder = 'filter ' + label.toLowerCase() + '...';
+    $dedupLabel.style.display = 'none';
+    $dedupToggle.checked = false;
 
     catalogItems = index;
     filteredCatalog = index.slice();
@@ -754,6 +783,8 @@ body {
     $backBtn.style.display = 'block';
     $colHeader.style.display = '';
     $trackFilter.placeholder = 'filter tracks...';
+    $dedupLabel.style.display = 'flex';
+    $dedupToggle.checked = false;
     $mainTitle.textContent = title;
     $mainMeta.textContent = meta;
 
@@ -824,31 +855,50 @@ body {
   });
 
   // ── Track Filtering ──
+  function refilter() {
+    const q = $trackFilter.value.toLowerCase();
+
+    if (catalogMode) {
+      filteredCatalog = q
+        ? catalogItems.filter(item => item.name.toLowerCase().includes(q) || (item.artist && item.artist.toLowerCase().includes(q)))
+        : catalogItems.slice();
+      renderCatalogList();
+      return;
+    }
+
+    if (!q) {
+      filteredTracks = currentTracks.slice();
+    } else {
+      filteredTracks = currentTracks.filter(t =>
+        t.name.toLowerCase().includes(q) ||
+        t.artist.toLowerCase().includes(q) ||
+        t.album.toLowerCase().includes(q)
+      );
+    }
+    applyDedup();
+    applySort();
+    renderTrackList();
+  }
+
   $trackFilter.addEventListener('input', () => {
     clearTimeout(filterTimer);
-    filterTimer = setTimeout(() => {
-      const q = $trackFilter.value.toLowerCase();
+    filterTimer = setTimeout(refilter, 120);
+  });
 
-      if (catalogMode) {
-        filteredCatalog = q
-          ? catalogItems.filter(item => item.name.toLowerCase().includes(q) || (item.artist && item.artist.toLowerCase().includes(q)))
-          : catalogItems.slice();
-        renderCatalogList();
-        return;
-      }
+  // ── Deduplication ──
+  function applyDedup() {
+    if (!$dedupToggle.checked) return;
+    const seen = new Set();
+    filteredTracks = filteredTracks.filter(t => {
+      const key = t.uri || (t.name + '|||' + t.artist).toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
 
-      if (!q) {
-        filteredTracks = currentTracks.slice();
-      } else {
-        filteredTracks = currentTracks.filter(t =>
-          t.name.toLowerCase().includes(q) ||
-          t.artist.toLowerCase().includes(q) ||
-          t.album.toLowerCase().includes(q)
-        );
-      }
-      applySort();
-      renderTrackList();
-    }, 120);
+  $dedupToggle.addEventListener('change', () => {
+    refilter();
   });
 
   // ── Sorting ──
