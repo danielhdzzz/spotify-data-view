@@ -354,6 +354,70 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #333; }
 
+/* ── Upload Screen ── */
+#upload-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100%;
+  gap: 20px;
+}
+
+#upload-screen h1 {
+  font-family: var(--sans);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+#upload-screen p {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  max-width: 400px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+#upload-screen a {
+  color: var(--accent-dim);
+}
+
+#drop-zone {
+  width: 400px;
+  height: 180px;
+  border: 2px dashed var(--border-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+#drop-zone:hover, #drop-zone.dragover {
+  border-color: var(--accent-dim);
+  background: var(--bg-raised);
+}
+
+#drop-zone .hint {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+#upload-error {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #c44;
+  display: none;
+}
+
 /* ── Stats bar ── */
 #stats-bar {
   padding: 6px 14px;
@@ -370,6 +434,20 @@ body {
 <body>
 
 <div id="loading">loading data...</div>
+
+<div id="upload-screen">
+  <h1>Spotify Library Browser</h1>
+  <p>Browse your exported Spotify data. Request yours from
+    <a href="https://www.spotify.com/account/privacy/" target="_blank" rel="noopener">spotify.com/account/privacy</a>
+    then drop the files here.</p>
+  <div id="drop-zone">
+    <span>drop folder or files here</span>
+    <span class="hint">or click to select JSON files</span>
+    <input type="file" id="file-input" multiple accept=".json" style="display:none" />
+  </div>
+  <div id="upload-error"></div>
+  <p>Your data never leaves your browser.</p>
+</div>
 
 <div id="sidebar" style="display:none">
   <div id="sidebar-header">
@@ -443,23 +521,46 @@ body {
   const $backBtn = document.getElementById('back-btn');
   const $dedupToggle = document.getElementById('dedup-toggle');
   const $dedupLabel = document.getElementById('dedup-label');
+  const $uploadScreen = document.getElementById('upload-screen');
+  const $dropZone = document.getElementById('drop-zone');
+  const $fileInput = document.getElementById('file-input');
+  const $uploadError = document.getElementById('upload-error');
 
   // ── Data Loading ──
-  async function loadData() {
-    const [libRes, p1, p2, p3] = await Promise.all([
-      fetch('data/YourLibrary.json').then(r => r.json()),
-      fetch('data/Playlist1.json').then(r => r.json()),
-      fetch('data/Playlist2.json').then(r => r.json()),
-      fetch('data/Playlist3.json').then(r => r.json()),
-    ]);
 
-    library = libRes;
+  // Try fetching local data/ folder first; if it fails, show upload screen
+  async function tryLocalData() {
+    try {
+      const res = await fetch('data/YourLibrary.json');
+      if (!res.ok) throw new Error('not found');
+      const libData = await res.json();
 
-    const allPlaylists = [
-      ...p1.playlists,
-      ...p2.playlists,
-      ...p3.playlists,
-    ];
+      // Detect how many Playlist files exist
+      const playlistFiles = [];
+      for (let i = 1; i <= 20; i++) {
+        try {
+          const pr = await fetch('data/Playlist' + i + '.json');
+          if (!pr.ok) break;
+          playlistFiles.push(await pr.json());
+        } catch { break; }
+      }
+
+      processData(libData, playlistFiles);
+    } catch {
+      // No local data — show upload screen
+      $loading.classList.add('hidden');
+      $uploadScreen.style.display = 'flex';
+    }
+  }
+
+  // Process uploaded or fetched data
+  function processData(libData, playlistFiles) {
+    library = libData;
+
+    const allPlaylists = [];
+    for (const pf of playlistFiles) {
+      if (pf.playlists) allPlaylists.push(...pf.playlists);
+    }
 
     // Sort by last modified, newest first
     allPlaylists.sort((a, b) => b.lastModifiedDate.localeCompare(a.lastModifiedDate));
@@ -508,11 +609,120 @@ body {
     $statsBar.textContent = `${library.tracks.length} liked songs \u00b7 ${playlists.length} playlists \u00b7 ${totalTracks.toLocaleString()} total tracks`;
 
     $loading.classList.add('hidden');
+    $uploadScreen.style.display = 'none';
     $sidebar.style.display = '';
     $main.style.display = '';
 
     renderSidebar('');
   }
+
+  // ── File Upload ──
+  function showUploadError(msg) {
+    $uploadError.textContent = msg;
+    $uploadError.style.display = '';
+  }
+
+  function readFileAsJSON(file) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try { resolve({ name: file.name, data: JSON.parse(reader.result) }); }
+        catch { resolve({ name: file.name, data: null }); }
+      };
+      reader.onerror = () => resolve({ name: file.name, data: null });
+      reader.readAsText(file);
+    });
+  }
+
+  function processUploadedFiles(results) {
+    const libFile = results.find(r => r.name === 'YourLibrary.json');
+    if (!libFile || !libFile.data) {
+      showUploadError('YourLibrary.json not found. Make sure to include it in your selection.');
+      return;
+    }
+
+    const playlistFiles = results
+      .filter(r => /^Playlist\d+\.json$/i.test(r.name) && r.data)
+      .map(r => r.data);
+
+    processData(libFile.data, playlistFiles);
+  }
+
+  // Read flat file list (from file picker or simple drop)
+  function handleFiles(files) {
+    $uploadError.style.display = 'none';
+    const jsonFiles = Array.from(files).filter(f => f.name.endsWith('.json'));
+    if (jsonFiles.length === 0) {
+      showUploadError('No JSON files found. Select the files from your Spotify data export.');
+      return;
+    }
+    Promise.all(jsonFiles.map(readFileAsJSON)).then(processUploadedFiles);
+  }
+
+  // Read entries from a dropped folder using the File System API
+  function readEntries(dirReader) {
+    return new Promise(resolve => {
+      const all = [];
+      (function read() {
+        dirReader.readEntries(entries => {
+          if (entries.length === 0) return resolve(all);
+          all.push(...entries);
+          read();
+        });
+      })();
+    });
+  }
+
+  function entryToFile(entry) {
+    return new Promise(resolve => entry.file(resolve));
+  }
+
+  async function collectJSONFiles(entries) {
+    const files = [];
+    for (const entry of entries) {
+      if (entry.isFile && entry.name.endsWith('.json')) {
+        files.push(await entryToFile(entry));
+      } else if (entry.isDirectory) {
+        const subEntries = await readEntries(entry.createReader());
+        files.push(...await collectJSONFiles(subEntries));
+      }
+    }
+    return files;
+  }
+
+  $dropZone.addEventListener('click', () => $fileInput.click());
+  $fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+  $dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    $dropZone.classList.add('dragover');
+  });
+  $dropZone.addEventListener('dragleave', () => $dropZone.classList.remove('dragover'));
+
+  $dropZone.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    $dropZone.classList.remove('dragover');
+    $uploadError.style.display = 'none';
+
+    // Try the DataTransfer items API first (supports folders)
+    const items = e.dataTransfer.items;
+    if (items && items.length > 0 && items[0].webkitGetAsEntry) {
+      const entries = [];
+      for (let i = 0; i < items.length; i++) {
+        const entry = items[i].webkitGetAsEntry();
+        if (entry) entries.push(entry);
+      }
+      const files = await collectJSONFiles(entries);
+      if (files.length === 0) {
+        showUploadError('No JSON files found. Drop your Spotify data folder or select the JSON files inside it.');
+        return;
+      }
+      Promise.all(files.map(readFileAsJSON)).then(processUploadedFiles);
+    } else {
+      // Fallback: flat file list
+      handleFiles(e.dataTransfer.files);
+    }
+  });
 
   function normalizePlaylistTracks(items) {
     return items.map(item => {
@@ -1118,10 +1328,7 @@ body {
   });
 
   // ── Init ──
-  loadData().catch(err => {
-    $loading.textContent = 'Error loading data: ' + err.message;
-    console.error(err);
-  });
+  tryLocalData();
 })();
 </script>
 </body>
