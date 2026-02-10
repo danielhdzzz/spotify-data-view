@@ -1,6 +1,6 @@
 # Spotify Library Browser
 
-A simple browser for your exported Spotify data. All processing happens in your browser — your data never leaves your machine.
+A simple browser for your exported Spotify data. Zero dependencies, pure HTML/CSS/JS — nothing to install, nothing to build. All processing happens in your browser — your data never leaves your machine.
 
 [Request your data](https://www.spotify.com/account/privacy/) from Spotify.
 
