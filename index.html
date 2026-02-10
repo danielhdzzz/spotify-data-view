@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Library</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a0a;
+  --bg-raised: #111111;
+  --bg-hover: #1a1a1a;
+  --bg-active: #1e1e1e;
+  --border: #222;
+  --border-light: #2a2a2a;
+  --text: #c8c8c8;
+  --text-dim: #666;
+  --text-bright: #e8e8e8;
+  --accent: #b4d455;
+  --accent-dim: #7a9130;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --row-h: 34px;
+}
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  display: flex;
+}
+
+/* ── Sidebar ── */
+#sidebar {
+  width: 280px;
+  min-width: 280px;
+  height: 100vh;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+#sidebar-header {
+  padding: 16px 14px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+#sidebar-header h1 {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+
+#sidebar-search {
+  width: 100%;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+#sidebar-search::placeholder { color: var(--text-dim); }
+#sidebar-search:focus { border-color: var(--accent-dim); }
+
+#playlist-list {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+  gap: 8px;
+}
+
+.sidebar-item:hover { background: var(--bg-hover); }
+.sidebar-item.active { background: var(--bg-active); border-left: 2px solid var(--accent); padding-left: 12px; }
+
+.sidebar-item-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+}
+
+.sidebar-item-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.sidebar-item-date {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.sidebar-section {
+  padding: 10px 14px 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 1;
+}
+
+/* ── Main ── */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-width: 0;
+}
+
+#main-header {
+  padding: 16px 20px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+#main-title {
+  font-family: var(--sans);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#main-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  padding-bottom: 3px;
+}
+
+#track-filter-wrap {
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#track-filter {
+  width: 100%;
+  max-width: 360px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+#track-filter::placeholder { color: var(--text-dim); }
+#track-filter:focus { border-color: var(--accent-dim); }
+
+/* ── Column Header ── */
+#col-header {
+  display: flex;
+  padding: 6px 20px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  cursor: default;
+  user-select: none;
+}
+
+#col-header span { padding: 2px 0; }
+.col-num { width: 44px; text-align: right; padding-right: 14px !important; flex-shrink: 0; }
+.col-track { flex: 4; min-width: 0; }
+.col-artist { flex: 3; min-width: 0; }
+.col-album { flex: 3; min-width: 0; }
+.col-date { width: 90px; text-align: right; flex-shrink: 0; }
+
+/* ── Track List (virtual scroll) ── */
+#track-viewport {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+
+#track-runway { position: relative; }
+
+.track-row {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  height: var(--row-h);
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.08s;
+}
+
+.track-row:hover { background: var(--bg-hover); }
+
+.track-row span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-row .col-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.track-row .col-track a {
+  color: var(--text-bright);
+  text-decoration: none;
+}
+
+.track-row .col-track a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.track-row .col-track .local-track {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.track-row .col-artist { color: var(--text); }
+.track-row .col-album { color: var(--text-dim); }
+
+.track-row .col-date {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ── Empty state ── */
+#empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+/* ── Loading ── */
+#loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+#loading.hidden { display: none; }
+
+/* ── Scrollbar (webkit) ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #333; }
+
+/* ── Stats bar ── */
+#stats-bar {
+  padding: 6px 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 16px;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<div id="loading">loading data...</div>
+
+<div id="sidebar" style="display:none">
+  <div id="sidebar-header">
+    <h1>Library</h1>
+    <input type="text" id="sidebar-search" placeholder="filter playlists..." spellcheck="false" />
+  </div>
+  <div id="playlist-list"></div>
+  <div id="stats-bar"></div>
+</div>
+
+<div id="main" style="display:none">
+  <div id="main-header">
+    <div id="main-title">Select a playlist</div>
+    <div id="main-meta"></div>
+  </div>
+  <div id="track-filter-wrap">
+    <input type="text" id="track-filter" placeholder="filter tracks..." spellcheck="false" />
+  </div>
+  <div id="col-header">
+    <span class="col-num">#</span>
+    <span class="col-track">Title</span>
+    <span class="col-artist">Artist</span>
+    <span class="col-album">Album</span>
+    <span class="col-date">Added</span>
+  </div>
+  <div id="track-viewport">
+    <div id="track-runway"></div>
+  </div>
+  <div id="empty-state" style="display:none">No tracks found</div>
+</div>
+
+<script>
+(function () {
+  const ROW_H = 34;
+  const RENDER_BUFFER = 10;
+
+  let library = null;
+  let playlists = [];
+  let activeId = null;
+  let currentTracks = [];
+  let filteredTracks = [];
+  let filterTimer = null;
+
+  // ── DOM refs ──
+  const $loading = document.getElementById('loading');
+  const $sidebar = document.getElementById('sidebar');
+  const $main = document.getElementById('main');
+  const $playlistList = document.getElementById('playlist-list');
+  const $sidebarSearch = document.getElementById('sidebar-search');
+  const $mainTitle = document.getElementById('main-title');
+  const $mainMeta = document.getElementById('main-meta');
+  const $trackFilter = document.getElementById('track-filter');
+  const $viewport = document.getElementById('track-viewport');
+  const $runway = document.getElementById('track-runway');
+  const $emptyState = document.getElementById('empty-state');
+  const $colHeader = document.getElementById('col-header');
+  const $trackFilterWrap = document.getElementById('track-filter-wrap');
+  const $statsBar = document.getElementById('stats-bar');
+
+  // ── Data Loading ──
+  async function loadData() {
+    const [libRes, p1, p2, p3] = await Promise.all([
+      fetch('data/YourLibrary.json').then(r => r.json()),
+      fetch('data/Playlist1.json').then(r => r.json()),
+      fetch('data/Playlist2.json').then(r => r.json()),
+      fetch('data/Playlist3.json').then(r => r.json()),
+    ]);
+
+    library = libRes;
+
+    const allPlaylists = [
+      ...p1.playlists,
+      ...p2.playlists,
+      ...p3.playlists,
+    ];
+
+    // Sort by last modified, newest first
+    allPlaylists.sort((a, b) => b.lastModifiedDate.localeCompare(a.lastModifiedDate));
+
+    playlists = allPlaylists.map((p, i) => ({
+      id: 'pl_' + i,
+      name: p.name,
+      date: p.lastModifiedDate,
+      trackCount: p.items.length,
+      tracks: normalizePlaylistTracks(p.items),
+    }));
+
+    const totalTracks = library.tracks.length + playlists.reduce((s, p) => s + p.trackCount, 0);
+    $statsBar.textContent = `${library.tracks.length} liked songs \u00b7 ${playlists.length} playlists \u00b7 ${totalTracks.toLocaleString()} total tracks`;
+
+    $loading.classList.add('hidden');
+    $sidebar.style.display = '';
+    $main.style.display = '';
+
+    renderSidebar('');
+  }
+
+  function normalizePlaylistTracks(items) {
+    return items.map(item => {
+      if (item.track) {
+        return {
+          name: item.track.trackName,
+          artist: item.track.artistName,
+          album: item.track.albumName,
+          uri: item.track.trackUri,
+          date: item.addedDate || '',
+          local: false,
+        };
+      }
+      if (item.localTrack) {
+        // Parse local URI: spotify:local:Artist:Album:Track:Duration
+        const parts = item.localTrack.uri.replace('spotify:local:', '').split(':');
+        return {
+          name: decodeURIComponent(parts[2] || 'Unknown'),
+          artist: decodeURIComponent(parts[0] || 'Unknown'),
+          album: decodeURIComponent(parts[1] || ''),
+          uri: null,
+          date: item.addedDate || '',
+          local: true,
+        };
+      }
+      return null;
+    }).filter(Boolean);
+  }
+
+  function normalizeLibraryTracks(tracks) {
+    return tracks.map(t => ({
+      name: t.track,
+      artist: t.artist,
+      album: t.album,
+      uri: t.uri,
+      date: '',
+      local: false,
+    }));
+  }
+
+  // ── Sidebar ──
+  function renderSidebar(filter) {
+    const frag = document.createDocumentFragment();
+    const q = filter.toLowerCase();
+
+    // Liked Songs (always show unless filtered out)
+    if (!q || 'liked songs'.includes(q)) {
+      const likedItem = makeSidebarItem('liked', 'Liked Songs', library.tracks.length, '');
+      frag.appendChild(likedItem);
+    }
+
+    // Albums
+    if (!q || 'albums'.includes(q)) {
+      if (library.albums.length > 0) {
+        const albumsItem = makeSidebarItem('albums', 'Saved Albums', library.albums.length, '');
+        frag.appendChild(albumsItem);
+      }
+    }
+
+    // Section label
+    const sectionEl = document.createElement('div');
+    sectionEl.className = 'sidebar-section';
+    sectionEl.textContent = 'Playlists';
+    frag.appendChild(sectionEl);
+
+    // Playlists
+    let count = 0;
+    for (const p of playlists) {
+      if (q && !p.name.toLowerCase().includes(q)) continue;
+      frag.appendChild(makeSidebarItem(p.id, p.name, p.trackCount, p.date));
+      count++;
+    }
+
+    $playlistList.innerHTML = '';
+    $playlistList.appendChild(frag);
+
+    // Restore active state
+    if (activeId) {
+      const el = $playlistList.querySelector(`[data-id="${activeId}"]`);
+      if (el) el.classList.add('active');
+    }
+  }
+
+  function makeSidebarItem(id, name, count, date) {
+    const el = document.createElement('div');
+    el.className = 'sidebar-item';
+    if (id === activeId) el.classList.add('active');
+    el.dataset.id = id;
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'sidebar-item-name';
+    nameSpan.textContent = name;
+
+    const countSpan = document.createElement('span');
+    countSpan.className = 'sidebar-item-count';
+    countSpan.textContent = count;
+
+    el.appendChild(nameSpan);
+    el.appendChild(countSpan);
+
+    el.addEventListener('click', () => selectPlaylist(id));
+    return el;
+  }
+
+  // ── Select Playlist ──
+  function selectPlaylist(id) {
+    activeId = id;
+
+    // Update sidebar active state
+    document.querySelectorAll('.sidebar-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.id === id);
+    });
+
+    // Load tracks
+    if (id === 'liked') {
+      $mainTitle.textContent = 'Liked Songs';
+      currentTracks = normalizeLibraryTracks(library.tracks);
+      $mainMeta.textContent = currentTracks.length + ' tracks';
+    } else if (id === 'albums') {
+      $mainTitle.textContent = 'Saved Albums';
+      currentTracks = library.albums.map(a => ({
+        name: a.album,
+        artist: a.artist,
+        album: '',
+        uri: a.uri ? a.uri.replace('spotify:album:', 'spotify:album:') : null,
+        date: '',
+        local: false,
+        isAlbum: true,
+      }));
+      $mainMeta.textContent = currentTracks.length + ' albums';
+    } else {
+      const pl = playlists.find(p => p.id === id);
+      $mainTitle.textContent = pl.name;
+      currentTracks = pl.tracks;
+      $mainMeta.textContent = pl.trackCount + ' tracks \u00b7 updated ' + pl.date;
+    }
+
+    $trackFilter.value = '';
+    filteredTracks = currentTracks;
+    renderTrackList();
+  }
+
+  // ── Track Filtering ──
+  $trackFilter.addEventListener('input', () => {
+    clearTimeout(filterTimer);
+    filterTimer = setTimeout(() => {
+      const q = $trackFilter.value.toLowerCase();
+      if (!q) {
+        filteredTracks = currentTracks;
+      } else {
+        filteredTracks = currentTracks.filter(t =>
+          t.name.toLowerCase().includes(q) ||
+          t.artist.toLowerCase().includes(q) ||
+          t.album.toLowerCase().includes(q)
+        );
+      }
+      renderTrackList();
+    }, 120);
+  });
+
+  // ── Virtual Scroll Track Rendering ──
+  let lastScrollTop = -1;
+  let visibleRows = [];
+
+  function renderTrackList() {
+    const total = filteredTracks.length;
+
+    if (total === 0 && currentTracks.length > 0) {
+      $emptyState.textContent = 'No matching tracks';
+      $emptyState.style.display = '';
+      $viewport.style.display = 'none';
+      $colHeader.style.display = 'none';
+      return;
+    }
+    if (total === 0) {
+      $emptyState.textContent = 'No tracks';
+      $emptyState.style.display = '';
+      $viewport.style.display = 'none';
+      $colHeader.style.display = 'none';
+      return;
+    }
+
+    $emptyState.style.display = 'none';
+    $viewport.style.display = '';
+    $colHeader.style.display = '';
+
+    // Update date column header visibility
+    const hasDate = filteredTracks.some(t => t.date);
+    $colHeader.querySelector('.col-date').style.display = hasDate ? '' : 'none';
+
+    $runway.style.height = total * ROW_H + 'px';
+
+    // Clear existing
+    visibleRows.forEach(r => r.el.remove());
+    visibleRows = [];
+    lastScrollTop = -1;
+
+    $viewport.scrollTop = 0;
+    renderVisibleRows();
+  }
+
+  function renderVisibleRows() {
+    const scrollTop = $viewport.scrollTop;
+    const viewH = $viewport.clientHeight;
+    const total = filteredTracks.length;
+
+    const startIdx = Math.max(0, Math.floor(scrollTop / ROW_H) - RENDER_BUFFER);
+    const endIdx = Math.min(total, Math.ceil((scrollTop + viewH) / ROW_H) + RENDER_BUFFER);
+
+    // Determine which rows we need
+    const needed = new Set();
+    for (let i = startIdx; i < endIdx; i++) needed.add(i);
+
+    // Remove rows no longer needed
+    visibleRows = visibleRows.filter(r => {
+      if (needed.has(r.idx)) {
+        needed.delete(r.idx);
+        return true;
+      }
+      r.el.remove();
+      return false;
+    });
+
+    const hasDate = filteredTracks.some(t => t.date);
+
+    // Add new rows
+    for (const idx of needed) {
+      const t = filteredTracks[idx];
+      const row = document.createElement('div');
+      row.className = 'track-row';
+      row.style.top = idx * ROW_H + 'px';
+
+      const numSpan = document.createElement('span');
+      numSpan.className = 'col-num';
+      numSpan.textContent = idx + 1;
+
+      const trackSpan = document.createElement('span');
+      trackSpan.className = 'col-track';
+
+      if (t.uri && !t.local) {
+        const a = document.createElement('a');
+        const trackId = t.uri.split(':').pop();
+        const type = t.isAlbum ? 'album' : 'track';
+        a.href = 'https://open.spotify.com/' + type + '/' + trackId;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.textContent = t.name;
+        trackSpan.appendChild(a);
+      } else {
+        const span = document.createElement('span');
+        span.className = t.local ? 'local-track' : '';
+        span.textContent = t.name;
+        trackSpan.appendChild(span);
+      }
+
+      const artistSpan = document.createElement('span');
+      artistSpan.className = 'col-artist';
+      artistSpan.textContent = t.artist;
+
+      const albumSpan = document.createElement('span');
+      albumSpan.className = 'col-album';
+      albumSpan.textContent = t.album;
+
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'col-date';
+      dateSpan.textContent = t.date || '';
+      dateSpan.style.display = hasDate ? '' : 'none';
+
+      row.appendChild(numSpan);
+      row.appendChild(trackSpan);
+      row.appendChild(artistSpan);
+      row.appendChild(albumSpan);
+      row.appendChild(dateSpan);
+
+      $runway.appendChild(row);
+      visibleRows.push({ idx, el: row });
+    }
+  }
+
+  $viewport.addEventListener('scroll', () => {
+    requestAnimationFrame(renderVisibleRows);
+  });
+
+  // ── Sidebar Search ──
+  $sidebarSearch.addEventListener('input', () => {
+    renderSidebar($sidebarSearch.value);
+  });
+
+  // ── Keyboard shortcuts ──
+  document.addEventListener('keydown', (e) => {
+    // Cmd/Ctrl+K focuses sidebar search
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      $sidebarSearch.focus();
+      $sidebarSearch.select();
+    }
+    // Cmd/Ctrl+F focuses track filter
+    if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+      e.preventDefault();
+      $trackFilter.focus();
+      $trackFilter.select();
+    }
+    // Escape clears focused input
+    if (e.key === 'Escape') {
+      if (document.activeElement === $sidebarSearch) {
+        $sidebarSearch.value = '';
+        $sidebarSearch.blur();
+        renderSidebar('');
+      } else if (document.activeElement === $trackFilter) {
+        $trackFilter.value = '';
+        $trackFilter.blur();
+        filteredTracks = currentTracks;
+        renderTrackList();
+      }
+    }
+  });
+
+  // ── Init ──
+  loadData().catch(err => {
+    $loading.textContent = 'Error loading data: ' + err.message;
+    console.error(err);
+  });
+})();
+</script>
+</body>
+</html>
