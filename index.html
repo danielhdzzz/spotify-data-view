@@ -208,7 +208,13 @@ body {
   user-select: none;
 }
 
-#col-header span { padding: 2px 0; }
+#col-header span { padding: 2px 0; cursor: pointer; }
+#col-header span:hover { color: var(--text); }
+#col-header span.sorted { color: var(--accent); }
+#col-header span.sorted::after { content: ' ▲'; font-size: 8px; }
+#col-header span.sorted.desc::after { content: ' ▼'; font-size: 8px; }
+#col-header .col-num { cursor: default; }
+#col-header .col-num:hover { color: var(--text-dim); }
 .col-num { width: 44px; text-align: right; padding-right: 14px !important; flex-shrink: 0; }
 .col-track { flex: 4; min-width: 0; }
 .col-artist { flex: 3; min-width: 0; }
@@ -365,6 +371,8 @@ body {
   let currentTracks = [];
   let filteredTracks = [];
   let filterTimer = null;
+  let sortCol = null;  // 'name', 'artist', 'album', 'date'
+  let sortAsc = true;
 
   // ── DOM refs ──
   const $loading = document.getElementById('loading');
@@ -557,7 +565,10 @@ body {
     }
 
     $trackFilter.value = '';
-    filteredTracks = currentTracks;
+    sortCol = null;
+    sortAsc = true;
+    updateSortHeaders();
+    filteredTracks = currentTracks.slice();
     renderTrackList();
   }
 
@@ -567,7 +578,7 @@ body {
     filterTimer = setTimeout(() => {
       const q = $trackFilter.value.toLowerCase();
       if (!q) {
-        filteredTracks = currentTracks;
+        filteredTracks = currentTracks.slice();
       } else {
         filteredTracks = currentTracks.filter(t =>
           t.name.toLowerCase().includes(q) ||
@@ -575,9 +586,48 @@ body {
           t.album.toLowerCase().includes(q)
         );
       }
+      applySort();
       renderTrackList();
     }, 120);
   });
+
+  // ── Sorting ──
+  function applySort() {
+    if (!sortCol) return;
+    const dir = sortAsc ? 1 : -1;
+    filteredTracks.sort((a, b) => {
+      const av = (a[sortCol] || '').toLowerCase();
+      const bv = (b[sortCol] || '').toLowerCase();
+      return av < bv ? -dir : av > bv ? dir : 0;
+    });
+  }
+
+  function toggleSort(col) {
+    if (sortCol === col) {
+      sortAsc = !sortAsc;
+    } else {
+      sortCol = col;
+      sortAsc = true;
+    }
+    updateSortHeaders();
+    applySort();
+    renderTrackList();
+  }
+
+  function updateSortHeaders() {
+    const map = { name: '.col-track', artist: '.col-artist', album: '.col-album', date: '.col-date' };
+    $colHeader.querySelectorAll('span').forEach(s => { s.classList.remove('sorted', 'desc'); });
+    if (sortCol && map[sortCol]) {
+      const el = $colHeader.querySelector(map[sortCol]);
+      el.classList.add('sorted');
+      if (!sortAsc) el.classList.add('desc');
+    }
+  }
+
+  $colHeader.querySelector('.col-track').addEventListener('click', () => toggleSort('name'));
+  $colHeader.querySelector('.col-artist').addEventListener('click', () => toggleSort('artist'));
+  $colHeader.querySelector('.col-album').addEventListener('click', () => toggleSort('album'));
+  $colHeader.querySelector('.col-date').addEventListener('click', () => toggleSort('date'));
 
   // ── Virtual Scroll Track Rendering ──
   let lastScrollTop = -1;
