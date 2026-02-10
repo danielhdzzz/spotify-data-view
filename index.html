@@ -148,9 +148,24 @@ body {
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: flex-end;
-  gap: 16px;
+  gap: 12px;
   flex-shrink: 0;
 }
+
+#back-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 3px 10px;
+  cursor: pointer;
+  display: none;
+  margin-bottom: 1px;
+  flex-shrink: 0;
+}
+
+#back-btn:hover { color: var(--text); border-color: var(--border-light); }
 
 #main-title {
   font-family: var(--sans);
@@ -273,7 +288,10 @@ body {
   font-style: italic;
 }
 
-.track-row .col-artist { color: var(--text); }
+.track-row .col-artist { color: var(--text); cursor: pointer; }
+.track-row .col-artist:hover { color: var(--accent); }
+.col-source { flex: 2; min-width: 0; }
+.track-row .col-source { color: var(--text-dim); font-size: 12px; }
 .track-row .col-album { color: var(--text-dim); }
 
 .track-row .col-date {
@@ -341,6 +359,7 @@ body {
 
 <div id="main" style="display:none">
   <div id="main-header">
+    <button id="back-btn">&larr; back</button>
     <div id="main-title">Select a playlist</div>
     <div id="main-meta"></div>
   </div>
@@ -352,6 +371,7 @@ body {
     <span class="col-track">Title</span>
     <span class="col-artist">Artist</span>
     <span class="col-album">Album</span>
+    <span class="col-source" style="display:none">Source</span>
     <span class="col-date">Added</span>
   </div>
   <div id="track-viewport">
@@ -371,8 +391,13 @@ body {
   let currentTracks = [];
   let filteredTracks = [];
   let filterTimer = null;
-  let sortCol = null;  // 'name', 'artist', 'album', 'date'
+  let sortCol = null;  // 'name', 'artist', 'album', 'date', 'source'
   let sortAsc = true;
+  let isArtistView = false;
+  let isArtistList = false;
+  let artistIndex = [];  // [{ name, count }] built at load
+  let filteredArtists = [];
+  let navHistory = [];  // stack of { type, id } for back navigation
 
   // ── DOM refs ──
   const $loading = document.getElementById('loading');
@@ -389,6 +414,7 @@ body {
   const $colHeader = document.getElementById('col-header');
   const $trackFilterWrap = document.getElementById('track-filter-wrap');
   const $statsBar = document.getElementById('stats-bar');
+  const $backBtn = document.getElementById('back-btn');
 
   // ── Data Loading ──
   async function loadData() {
@@ -417,6 +443,22 @@ body {
       trackCount: p.items.length,
       tracks: normalizePlaylistTracks(p.items),
     }));
+
+    // Build artist index
+    const artistMap = new Map();
+    for (const t of library.tracks) {
+      const key = t.artist.toLowerCase();
+      if (!artistMap.has(key)) artistMap.set(key, { name: t.artist, count: 0 });
+      artistMap.get(key).count++;
+    }
+    for (const pl of playlists) {
+      for (const t of pl.tracks) {
+        const key = t.artist.toLowerCase();
+        if (!artistMap.has(key)) artistMap.set(key, { name: t.artist, count: 0 });
+        artistMap.get(key).count++;
+      }
+    }
+    artistIndex = Array.from(artistMap.values()).sort((a, b) => b.count - a.count);
 
     const totalTracks = library.tracks.length + playlists.reduce((s, p) => s + p.trackCount, 0);
     $statsBar.textContent = `${library.tracks.length} liked songs \u00b7 ${playlists.length} playlists \u00b7 ${totalTracks.toLocaleString()} total tracks`;
@@ -486,6 +528,11 @@ body {
       }
     }
 
+    // Artists
+    if (!q || 'artists'.includes(q)) {
+      frag.appendChild(makeSidebarItem('artists', 'Artists', artistIndex.length, ''));
+    }
+
     // Section label
     const sectionEl = document.createElement('div');
     sectionEl.className = 'sidebar-section';
@@ -533,12 +580,28 @@ body {
 
   // ── Select Playlist ──
   function selectPlaylist(id) {
+    navHistory = [];
+    showPlaylist(id);
+  }
+
+  function showPlaylist(id) {
     activeId = id;
+    isArtistView = false;
+    isArtistList = false;
+    $backBtn.style.display = 'none';
 
     // Update sidebar active state
     document.querySelectorAll('.sidebar-item').forEach(el => {
       el.classList.toggle('active', el.dataset.id === id);
     });
+
+    if (id === 'artists') {
+      showArtistList();
+      return;
+    }
+
+    // Show track columns
+    $colHeader.style.display = '';
 
     // Load tracks
     if (id === 'liked') {
@@ -572,11 +635,159 @@ body {
     renderTrackList();
   }
 
+  // ── Artist List ──
+  function showArtistList() {
+    isArtistList = true;
+    isArtistView = false;
+    $mainTitle.textContent = 'Artists';
+    $mainMeta.textContent = artistIndex.length + ' artists';
+    $colHeader.style.display = 'none';
+    $trackFilter.value = '';
+    $trackFilter.placeholder = 'filter artists...';
+
+    filteredArtists = artistIndex.slice();
+    currentTracks = [];
+    filteredTracks = [];
+    renderArtistList();
+  }
+
+  function renderArtistList() {
+    const total = filteredArtists.length;
+    $emptyState.style.display = total === 0 ? '' : 'none';
+    $emptyState.textContent = 'No matching artists';
+    $viewport.style.display = total === 0 ? 'none' : '';
+
+    $runway.style.height = total * ROW_H + 'px';
+
+    visibleRows.forEach(r => r.el.remove());
+    visibleRows = [];
+    lastScrollTop = -1;
+    $viewport.scrollTop = 0;
+    renderVisibleArtistRows();
+  }
+
+  function renderVisibleArtistRows() {
+    const scrollTop = $viewport.scrollTop;
+    const viewH = $viewport.clientHeight;
+    const total = filteredArtists.length;
+
+    const startIdx = Math.max(0, Math.floor(scrollTop / ROW_H) - RENDER_BUFFER);
+    const endIdx = Math.min(total, Math.ceil((scrollTop + viewH) / ROW_H) + RENDER_BUFFER);
+
+    const needed = new Set();
+    for (let i = startIdx; i < endIdx; i++) needed.add(i);
+
+    visibleRows = visibleRows.filter(r => {
+      if (needed.has(r.idx)) { needed.delete(r.idx); return true; }
+      r.el.remove();
+      return false;
+    });
+
+    for (const idx of needed) {
+      const a = filteredArtists[idx];
+      const row = document.createElement('div');
+      row.className = 'track-row';
+      row.style.top = idx * ROW_H + 'px';
+      row.style.cursor = 'pointer';
+
+      const numSpan = document.createElement('span');
+      numSpan.className = 'col-num';
+      numSpan.textContent = idx + 1;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'col-track';
+      nameSpan.style.flex = '1';
+      nameSpan.textContent = a.name;
+      nameSpan.style.color = 'var(--text-bright)';
+
+      const countSpan = document.createElement('span');
+      countSpan.className = 'col-date';
+      countSpan.style.display = '';
+      countSpan.textContent = a.count + ' tracks';
+
+      row.appendChild(numSpan);
+      row.appendChild(nameSpan);
+      row.appendChild(countSpan);
+
+      row.addEventListener('click', () => {
+        navHistory.push({ type: 'artistList' });
+        showArtist(a.name);
+      });
+
+      $runway.appendChild(row);
+      visibleRows.push({ idx, el: row });
+    }
+  }
+
+  // ── Artist View ──
+  function showArtist(artistName) {
+    const key = artistName.toLowerCase();
+    const tracks = [];
+
+    // Search liked songs
+    for (const t of library.tracks) {
+      if (t.artist.toLowerCase() === key) {
+        tracks.push({ name: t.track, artist: t.artist, album: t.album, uri: t.uri, date: '', local: false, source: 'Liked Songs' });
+      }
+    }
+
+    // Search all playlists
+    for (const pl of playlists) {
+      for (const t of pl.tracks) {
+        if (t.artist.toLowerCase() === key) {
+          tracks.push({ ...t, source: pl.name });
+        }
+      }
+    }
+
+    // Deselect sidebar
+    document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+
+    isArtistView = true;
+    isArtistList = false;
+    $backBtn.style.display = 'block';
+    $colHeader.style.display = '';
+    $trackFilter.placeholder = 'filter tracks...';
+    $mainTitle.textContent = artistName;
+    $mainMeta.textContent = tracks.length + ' tracks across your library';
+
+    $trackFilter.value = '';
+    sortCol = null;
+    sortAsc = true;
+    updateSortHeaders();
+    currentTracks = tracks;
+    filteredTracks = tracks.slice();
+    renderTrackList();
+  }
+
+  // ── Back Navigation ──
+  $backBtn.addEventListener('click', () => {
+    const prev = navHistory.pop();
+    if (!prev) return;
+    if (prev.type === 'artistList') {
+      activeId = 'artists';
+      document.querySelectorAll('.sidebar-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.id === 'artists');
+      });
+      $backBtn.style.display = 'none';
+      showArtistList();
+    } else if (prev.type === 'playlist') {
+      showPlaylist(prev.id);
+    }
+  });
+
   // ── Track Filtering ──
   $trackFilter.addEventListener('input', () => {
     clearTimeout(filterTimer);
     filterTimer = setTimeout(() => {
       const q = $trackFilter.value.toLowerCase();
+
+      if (isArtistList) {
+        filteredArtists = q ? artistIndex.filter(a => a.name.toLowerCase().includes(q)) : artistIndex.slice();
+        renderArtistList();
+        return;
+      }
+
       if (!q) {
         filteredTracks = currentTracks.slice();
       } else {
@@ -615,7 +826,7 @@ body {
   }
 
   function updateSortHeaders() {
-    const map = { name: '.col-track', artist: '.col-artist', album: '.col-album', date: '.col-date' };
+    const map = { name: '.col-track', artist: '.col-artist', album: '.col-album', source: '.col-source', date: '.col-date' };
     $colHeader.querySelectorAll('span').forEach(s => { s.classList.remove('sorted', 'desc'); });
     if (sortCol && map[sortCol]) {
       const el = $colHeader.querySelector(map[sortCol]);
@@ -627,6 +838,7 @@ body {
   $colHeader.querySelector('.col-track').addEventListener('click', () => toggleSort('name'));
   $colHeader.querySelector('.col-artist').addEventListener('click', () => toggleSort('artist'));
   $colHeader.querySelector('.col-album').addEventListener('click', () => toggleSort('album'));
+  $colHeader.querySelector('.col-source').addEventListener('click', () => toggleSort('source'));
   $colHeader.querySelector('.col-date').addEventListener('click', () => toggleSort('date'));
 
   // ── Virtual Scroll Track Rendering ──
@@ -655,9 +867,10 @@ body {
     $viewport.style.display = '';
     $colHeader.style.display = '';
 
-    // Update date column header visibility
+    // Update column visibility
     const hasDate = filteredTracks.some(t => t.date);
     $colHeader.querySelector('.col-date').style.display = hasDate ? '' : 'none';
+    $colHeader.querySelector('.col-source').style.display = isArtistView ? '' : 'none';
 
     $runway.style.height = total * ROW_H + 'px';
 
@@ -727,10 +940,19 @@ body {
       const artistSpan = document.createElement('span');
       artistSpan.className = 'col-artist';
       artistSpan.textContent = t.artist;
+      artistSpan.addEventListener('click', () => {
+        if (activeId) navHistory.push({ type: 'playlist', id: activeId });
+        showArtist(t.artist);
+      });
 
       const albumSpan = document.createElement('span');
       albumSpan.className = 'col-album';
       albumSpan.textContent = t.album;
+
+      const sourceSpan = document.createElement('span');
+      sourceSpan.className = 'col-source';
+      sourceSpan.textContent = t.source || '';
+      sourceSpan.style.display = isArtistView ? '' : 'none';
 
       const dateSpan = document.createElement('span');
       dateSpan.className = 'col-date';
@@ -741,6 +963,7 @@ body {
       row.appendChild(trackSpan);
       row.appendChild(artistSpan);
       row.appendChild(albumSpan);
+      row.appendChild(sourceSpan);
       row.appendChild(dateSpan);
 
       $runway.appendChild(row);
@@ -749,7 +972,10 @@ body {
   }
 
   $viewport.addEventListener('scroll', () => {
-    requestAnimationFrame(renderVisibleRows);
+    requestAnimationFrame(() => {
+      if (isArtistList) renderVisibleArtistRows();
+      else renderVisibleRows();
+    });
   });
 
   // ── Sidebar Search ──
