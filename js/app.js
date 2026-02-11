@@ -68,6 +68,9 @@ export const $ = {
   privacyOverlay: document.getElementById("privacy-overlay"),
   exportCsvBtn: document.getElementById("export-csv-btn"),
   exportTxtBtn: document.getElementById("export-txt-btn"),
+  exportOverlay: document.getElementById("export-overlay"),
+  exportColumns: document.getElementById("export-columns"),
+  exportConfirmBtn: document.getElementById("export-confirm-btn"),
 };
 
 // ── Theme ──
@@ -464,7 +467,7 @@ document.addEventListener("keydown", (e) => {
     $.trackFilter.select();
   }
   if (e.key === "Escape") {
-    const open = [$.settingsOverlay, $.privacyOverlay].find((o) => o.style.display !== "none");
+    const open = [$.settingsOverlay, $.privacyOverlay, $.exportOverlay].find((o) => o.style.display !== "none");
     if (open) {
       open.style.display = "none";
     } else if (document.activeElement === $.sidebarSearch) {
@@ -505,6 +508,7 @@ function wireOverlay(overlay) {
 
 wireOverlay($.settingsOverlay);
 wireOverlay($.privacyOverlay);
+wireOverlay($.exportOverlay);
 
 // ── Settings ──
 loadSettings();
@@ -563,7 +567,17 @@ document.getElementById("library-title").addEventListener("click", () => {
   showAllPlaylistTracks();
 });
 
-// ── CSV Export ──
+// ── Export ──
+const EXPORT_COLUMNS = [
+  { key: "playlist", label: "Playlist", header: "Playlist Name" },
+  { key: "name",     label: "Title",    header: "Track Name" },
+  { key: "artist",   label: "Artist",   header: "Artist" },
+  { key: "album",    label: "Album",    header: "Album" },
+  { key: "source",   label: "Source",   header: "Source" },
+  { key: "uri",      label: "Spotify URI", header: "Spotify URI" },
+  { key: "date",     label: "Date Added",  header: "Date Added" },
+];
+
 function csvEscape(val) {
   if (!val) return "";
   const s = String(val);
@@ -573,26 +587,21 @@ function csvEscape(val) {
   return s;
 }
 
-$.exportCsvBtn.addEventListener("click", () => {
-  const tracks = state.filteredTracks;
-  if (!tracks || tracks.length === 0) return;
+function downloadFile(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
-  const rows = [["Track Name", "Artist", "Album", "Spotify URI"].join(",")];
-  for (const t of tracks) {
-    rows.push(
-      [csvEscape(t.name), csvEscape(t.artist), csvEscape(t.album), csvEscape(t.uri || "")].join(","),
-    );
-  }
-  downloadFile(rows.join("\n"), ($.mainTitle.textContent || "export") + ".csv", "text/csv;charset=utf-8");
-});
-
-$.exportTxtBtn.addEventListener("click", () => {
-  const tracks = state.filteredTracks;
-  if (!tracks || tracks.length === 0) return;
-
-  const lines = tracks.map((t) => t.artist + " - " + t.name);
-  downloadFile(lines.join("\n"), ($.mainTitle.textContent || "export") + ".txt", "text/plain;charset=utf-8");
-});
+function getTrackValue(track, key) {
+  if (key === "uri") return track.uri || "";
+  if (key === "date") return track.date || "";
+  return track[key] || "";
+}
 
 function getAllTracks() {
   const tracks = [];
@@ -608,47 +617,143 @@ function getAllTracks() {
   return tracks;
 }
 
-function downloadFile(content, filename, type) {
-  const blob = new Blob([content], { type });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+let pendingExportFormat = null;
+let pendingExportScope = null;
 
-function exportAllCsv() {
-  if (!state.library) return;
-  const tracks = getAllTracks();
-  const rows = [["Playlist Name", "Track Name", "Artist", "Album", "Spotify URI"].join(",")];
-  for (const t of tracks) {
-    rows.push(
-      [csvEscape(t.playlist), csvEscape(t.name), csvEscape(t.artist), csvEscape(t.album), csvEscape(t.uri || "")].join(","),
-    );
-  }
-  downloadFile(rows.join("\n"), "spotify-library.csv", "text/csv;charset=utf-8");
-}
+function openExportOverlay(format, scope) {
+  pendingExportFormat = format;
+  pendingExportScope = scope;
 
-function exportAllTxt() {
-  if (!state.library) return;
-  const tracks = getAllTracks();
-  let currentPlaylist = null;
-  const lines = [];
-  for (const t of tracks) {
-    if (t.playlist !== currentPlaylist) {
-      if (currentPlaylist !== null) lines.push("");
-      lines.push("## " + t.playlist);
-      lines.push("");
-      currentPlaylist = t.playlist;
+  const isAllTracks = state.activeId === "all-playlists";
+  const isGlobal = scope === "global";
+  const tracks = isGlobal ? null : state.filteredTracks;
+  const hasDates = !isGlobal && tracks && tracks.some((t) => t.date);
+
+  // Determine available columns + defaults
+  const columns = [];
+  for (const col of EXPORT_COLUMNS) {
+    let available = false;
+    let checked = false;
+
+    if (col.key === "playlist") {
+      if (isGlobal) { available = true; checked = true; }
+    } else if (col.key === "name" || col.key === "artist" || col.key === "album") {
+      available = true; checked = true;
+    } else if (col.key === "source") {
+      if (isAllTracks && !isGlobal) { available = true; checked = false; }
+    } else if (col.key === "uri") {
+      available = true; checked = true;
+    } else if (col.key === "date") {
+      if (!isGlobal && hasDates) { available = true; checked = false; }
     }
-    lines.push(t.artist + " - " + t.name);
+
+    if (available) columns.push({ ...col, checked });
   }
-  downloadFile(lines.join("\n"), "spotify-library.txt", "text/plain;charset=utf-8");
+
+  // Build checkboxes
+  $.exportColumns.innerHTML = "";
+  for (const col of columns) {
+    const label = document.createElement("label");
+    label.className = "overlay-row";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = col.checked;
+    cb.dataset.key = col.key;
+    const span = document.createElement("span");
+    span.textContent = col.label;
+    label.append(cb, span);
+    $.exportColumns.appendChild(label);
+  }
+
+  $.exportOverlay.style.display = "";
 }
 
-document.querySelectorAll(".export-all-csv-btn").forEach((btn) => btn.addEventListener("click", exportAllCsv));
-document.querySelectorAll(".export-all-txt-btn").forEach((btn) => btn.addEventListener("click", exportAllTxt));
+function executePlaylistExport(format, selectedKeys) {
+  const tracks = state.filteredTracks;
+  if (!tracks || tracks.length === 0) return;
+  const filename = ($.mainTitle.textContent || "export") + "." + format;
+
+  if (format === "csv") {
+    const cols = EXPORT_COLUMNS.filter((c) => selectedKeys.includes(c.key));
+    const rows = [cols.map((c) => c.header).join(",")];
+    for (const t of tracks) {
+      rows.push(cols.map((c) => csvEscape(getTrackValue(t, c.key))).join(","));
+    }
+    downloadFile(rows.join("\n"), filename, "text/csv;charset=utf-8");
+  } else {
+    const keys = EXPORT_COLUMNS.filter((c) => selectedKeys.includes(c.key)).map((c) => c.key);
+    const lines = tracks.map((t) => keys.map((k) => getTrackValue(t, k)).filter(Boolean).join(" - "));
+    downloadFile(lines.join("\n"), filename, "text/plain;charset=utf-8");
+  }
+}
+
+function executeGlobalExport(format, selectedKeys) {
+  if (!state.library) return;
+  const tracks = getAllTracks();
+  const filename = "spotify-library." + format;
+
+  if (format === "csv") {
+    const cols = EXPORT_COLUMNS.filter((c) => selectedKeys.includes(c.key));
+    const rows = [cols.map((c) => c.header).join(",")];
+    for (const t of tracks) {
+      rows.push(cols.map((c) => csvEscape(getTrackValue(t, c.key))).join(","));
+    }
+    downloadFile(rows.join("\n"), filename, "text/csv;charset=utf-8");
+  } else {
+    const hasPlaylist = selectedKeys.includes("playlist");
+    const valueKeys = EXPORT_COLUMNS.filter((c) => selectedKeys.includes(c.key) && c.key !== "playlist").map((c) => c.key);
+    if (hasPlaylist) {
+      let currentPlaylist = null;
+      const lines = [];
+      for (const t of tracks) {
+        if (t.playlist !== currentPlaylist) {
+          if (currentPlaylist !== null) lines.push("");
+          lines.push("## " + t.playlist);
+          lines.push("");
+          currentPlaylist = t.playlist;
+        }
+        lines.push(valueKeys.map((k) => getTrackValue(t, k)).filter(Boolean).join(" - "));
+      }
+      downloadFile(lines.join("\n"), filename, "text/plain;charset=utf-8");
+    } else {
+      const lines = tracks.map((t) => valueKeys.map((k) => getTrackValue(t, k)).filter(Boolean).join(" - "));
+      downloadFile(lines.join("\n"), filename, "text/plain;charset=utf-8");
+    }
+  }
+}
+
+$.exportConfirmBtn.addEventListener("click", () => {
+  const selectedKeys = [];
+  for (const cb of $.exportColumns.querySelectorAll("input[type=checkbox]")) {
+    if (cb.checked) selectedKeys.push(cb.dataset.key);
+  }
+  if (selectedKeys.length === 0) return;
+
+  $.exportOverlay.style.display = "none";
+
+  if (pendingExportScope === "global") {
+    executeGlobalExport(pendingExportFormat, selectedKeys);
+  } else {
+    executePlaylistExport(pendingExportFormat, selectedKeys);
+  }
+});
+
+$.exportCsvBtn.addEventListener("click", () => {
+  if (!state.filteredTracks || state.filteredTracks.length === 0) return;
+  openExportOverlay("csv", "playlist");
+});
+
+$.exportTxtBtn.addEventListener("click", () => {
+  if (!state.filteredTracks || state.filteredTracks.length === 0) return;
+  openExportOverlay("txt", "playlist");
+});
+
+document.querySelectorAll(".export-all-csv-btn").forEach((btn) =>
+  btn.addEventListener("click", () => openExportOverlay("csv", "global")),
+);
+document.querySelectorAll(".export-all-txt-btn").forEach((btn) =>
+  btn.addEventListener("click", () => openExportOverlay("txt", "global")),
+);
 
 // ── Mobile overlay ──
 document.getElementById("mobile-dismiss").addEventListener("click", () => {
