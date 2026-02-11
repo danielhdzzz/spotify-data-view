@@ -574,7 +574,7 @@ function csvEscape(val) {
 }
 
 $.exportCsvBtn.addEventListener("click", () => {
-  const tracks = state.currentTracks;
+  const tracks = state.filteredTracks;
   if (!tracks || tracks.length === 0) return;
 
   const rows = [["Track Name", "Artist", "Album", "Spotify URI"].join(",")];
@@ -587,7 +587,7 @@ $.exportCsvBtn.addEventListener("click", () => {
 });
 
 $.exportTxtBtn.addEventListener("click", () => {
-  const tracks = state.currentTracks;
+  const tracks = state.filteredTracks;
   if (!tracks || tracks.length === 0) return;
 
   const lines = tracks.map((t) => t.artist + " - " + t.name);
