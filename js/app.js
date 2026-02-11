@@ -64,6 +64,21 @@ export const $ = {
   privacyOverlay: document.getElementById("privacy-overlay"),
 };
 
+// ── Theme ──
+const themeMQ = window.matchMedia("(prefers-color-scheme: light)");
+
+function applyTheme() {
+  const theme = getSettings().theme;
+  if (theme === "light" || (theme === "system" && themeMQ.matches)) {
+    document.documentElement.setAttribute("data-theme", "light");
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+}
+
+themeMQ.addEventListener("change", () => applyTheme());
+applyTheme();
+
 // ── Navigation ──
 export function selectPlaylist(id) {
   state.navHistory = [];
@@ -384,6 +399,19 @@ wireOverlay($.privacyOverlay);
 // ── Settings ──
 loadSettings();
 $.hideLocalToggle.checked = getSettings().hideLocalTracks;
+
+// Theme radios
+const themeRadios = document.querySelectorAll('input[name="theme"]');
+const currentTheme = getSettings().theme;
+themeRadios.forEach((r) => {
+  if (r.value === currentTheme) r.checked = true;
+  r.addEventListener("change", () => {
+    const s = getSettings();
+    s.theme = r.value;
+    saveSettings(s);
+    applyTheme();
+  });
+});
 
 $.settingsBtn.addEventListener("click", () => {
   $.settingsOverlay.style.display = "";

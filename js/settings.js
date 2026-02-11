@@ -1,7 +1,7 @@
 // ── Settings (localStorage persistence) ──
 
 const STORAGE_KEY = "settings";
-const DEFAULTS = { hideLocalTracks: false };
+const DEFAULTS = { hideLocalTracks: false, theme: "system" };
 
 let current = null;
 
