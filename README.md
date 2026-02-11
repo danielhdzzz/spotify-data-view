@@ -2,11 +2,14 @@
 
 A simple browser for your exported Spotify data. Zero dependencies, pure HTML/CSS/JS — nothing to install, nothing to build. All processing happens in your browser — your data never leaves your machine.
 
-[Request your data](https://www.spotify.com/account/privacy/) from Spotify.
+## Getting Your Data
+
+1. Go to [spotify.com/account/privacy](https://www.spotify.com/account/privacy/) and log in
+2. Scroll to "Download your data" and request your data (the **Account data** package — not Extended streaming history)
+3. Spotify will email you when it's ready (usually a few days)
+4. Download and unzip the file — you'll get a folder containing `YourLibrary.json` and one or more `Playlist1.json`, `Playlist2.json`, etc.
 
 ## Usage
-
-There are two ways to use this:
 
 ### Online (upload)
 
@@ -21,7 +24,6 @@ Clone the repo and place your exported JSON files into a `data/` folder next to 
 ```
 git clone <repo-url>
 cd spotify-library-browser
-# copy your Spotify export JSON files into data/
 mkdir data
 cp ~/Downloads/my_spotify_data/*.json data/
 python3 -m http.server 8888
@@ -31,8 +33,19 @@ Then open http://localhost:8888.
 
 > A local server is needed because browsers block file loading from `file://` URLs for security reasons.
 
+## Features
+
+- **Playlists & Liked Songs** — browse every playlist and your full liked songs library
+- **Artists & Albums** — deduplicated index of every artist and album across your library, sorted by track count
+- **Search & Filter** — filter playlists in the sidebar (`Cmd+K`) or tracks in the current view (`Cmd+F`)
+- **Sorting** — click any column header to sort by title, artist, album, or date added
+- **Deduplication** — toggle "hide duplicates" to collapse cross-playlist repeats
+- **Stats** — library overview with unique track/artist/album counts, top artists, top albums, timeline of tracks added per month, and new artist discoveries
+- **Settings** — hide local tracks (stored files not on Spotify) from all views and stats; persisted in localStorage
+- **Privacy** — no data collection, no cookies, no analytics, no servers
+
 ## Keyboard Shortcuts
 
 - `Cmd+K` — Focus playlist search
 - `Cmd+F` — Focus track search
-- `Esc` — Clear and unfocus active search
+- `Esc` — Close popup / clear and unfocus active search
