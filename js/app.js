@@ -192,14 +192,14 @@ export function showAllPlaylistTracks() {
 
   $.trackFilterWrap.style.display = "";
   $.colHeader.style.display = "";
-  $.trackFilter.placeholder = "search all playlists...";
+  $.trackFilter.placeholder = "search all tracks...";
   $.trackFilter.value = "";
   $.dedupLabel.style.display = "flex";
   $.dedupToggle.checked = true;
   $.exportCsvBtn.classList.add("visible");
   $.exportTxtBtn.classList.add("visible");
 
-  const allTracks = [];
+  const allTracks = filterLocalTracks(normalizeLibraryTracks(state.library.tracks));
   for (const pl of state.playlists) {
     for (const t of filterLocalTracks(pl.tracks)) {
       allTracks.push(t);
@@ -224,9 +224,9 @@ export function updateMainMeta() {
     for (const t of state.currentTracks) {
       seen.add(t.uri || (t.name + "|||" + t.artist).toLowerCase());
     }
-    $.mainMeta.textContent = seen.size.toLocaleString() + " unique tracks across " + n + " playlists";
+    $.mainMeta.textContent = seen.size.toLocaleString() + " unique tracks across liked songs + " + n + " playlists";
   } else {
-    $.mainMeta.textContent = state.currentTracks.length.toLocaleString() + " tracks across " + n + " playlists";
+    $.mainMeta.textContent = state.currentTracks.length.toLocaleString() + " tracks across liked songs + " + n + " playlists";
   }
 }
 
