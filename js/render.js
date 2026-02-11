@@ -5,6 +5,7 @@ import { getSettings } from "./settings.js";
 export function renderSidebar(filter) {
   const frag = document.createDocumentFragment();
   const q = filter.toLowerCase();
+  const hideLocal = getSettings().hideLocalTracks;
 
   if (!q || "liked songs".includes(q)) {
     const likedItem = makeSidebarItem(
@@ -130,7 +131,9 @@ export function renderSidebar(filter) {
 
   for (const p of state.playlists) {
     if (q && !p.name.toLowerCase().includes(q)) continue;
-    frag.appendChild(makeSidebarItem(p.id, p.name, p.trackCount, p.date));
+    const count = hideLocal ? p.tracks.filter((t) => !t.local).length : p.trackCount;
+    if (hideLocal && count === 0) continue;
+    frag.appendChild(makeSidebarItem(p.id, p.name, count, p.date));
   }
 
   $.playlistList.innerHTML = "";

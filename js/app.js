@@ -486,6 +486,7 @@ $.hideLocalToggle.addEventListener("change", () => {
   saveSettings(s);
   invalidateCachedStats();
   if (state.library) buildIndexes();
+  renderSidebar($.sidebarSearch.value);
   // Reapply current view
   if (state.activeId) {
     if (state.isDetailView) {
