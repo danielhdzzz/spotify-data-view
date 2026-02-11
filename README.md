@@ -11,15 +11,13 @@ A simple browser for your exported Spotify data. Zero dependencies, pure HTML/CS
 
 ## Usage
 
-### Online (upload)
+Visit [the hosted site](https://danielhdzzz.github.io/spotify-data-view/) and drop your Spotify export folder (or the JSON files inside it) onto the upload area. You can also click to select files manually. Your data is processed entirely in the browser and is never sent anywhere.
 
-Visit the hosted site and drop your Spotify export folder (or the JSON files inside it) onto the upload area. You can also click to select files manually. Your data is processed entirely in the browser and is never sent anywhere.
+After the first upload, your data is cached locally in your browser (IndexedDB) so the app loads instantly on return visits — no need to re-upload. You can clear the cache from Settings.
 
-The trade-off: you'll need to re-upload each time you refresh the page.
+### Running locally (optional)
 
-### Local (persistent)
-
-Clone the repo and place your exported JSON files into a `data/` folder next to `index.html`. The app detects the folder and loads your data automatically — no uploading, survives refreshes.
+You can also clone the repo and place your exported JSON files into a `data/` folder next to `index.html`. The app detects the folder and loads your data automatically.
 
 ```
 git clone <repo-url>
