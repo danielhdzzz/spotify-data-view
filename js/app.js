@@ -1,6 +1,7 @@
 import { initData, tryLocalData, buildIndexes } from "./data.js";
 import { initRender, renderSidebar, renderTrackList, renderCatalogList, renderVisibleRows, renderVisibleCatalogRows, updateSortHeaders } from "./render.js";
 import { computeStats, renderStatsPage } from "./stats.js";
+import { renderWrappedPage } from "./wrapped.js";
 import { loadSettings, saveSettings, getSettings } from "./settings.js";
 import { clearCachedData } from "./cache.js";
 
@@ -28,6 +29,9 @@ export const state = {
   lastScrollTop: -1,
   visibleRows: [],
   statsOpen: false,
+  wrappedYears: [],
+  wrappedOpen: false,
+  trackUriIndex: null,
 };
 
 // ── DOM refs ──
@@ -86,11 +90,19 @@ export function selectPlaylist(id) {
     showStatsPage(id);
     return;
   }
+  if (id.startsWith("wrapped-")) {
+    showWrappedPage(id);
+    return;
+  }
   showPlaylist(id);
 }
 
 export function toggleStatsMenu() {
   state.statsOpen = !state.statsOpen;
+}
+
+export function toggleWrappedMenu() {
+  state.wrappedOpen = !state.wrappedOpen;
 }
 
 export let cachedStats = null;
@@ -141,6 +153,28 @@ function showStatsPage(id) {
       showAlbum(name, artist);
     },
   });
+}
+
+function showWrappedPage(id) {
+  const year = parseInt(id.replace("wrapped-", ""), 10);
+  const wrappedYear = state.wrappedYears.find((w) => w.year === year);
+  if (!wrappedYear) return;
+
+  state.activeId = id;
+  state.isDetailView = false;
+  state.catalogMode = null;
+  $.main.style.display = "none";
+  $.statsView.style.display = "flex";
+
+  state.wrappedOpen = true;
+
+  document.querySelectorAll(".sidebar-item").forEach((el) => {
+    el.classList.toggle("active", el.dataset.id === id);
+  });
+
+  $.statsTitle.textContent = "Wrapped " + year;
+  $.statsMeta.textContent = "Your year in music";
+  renderWrappedPage($.statsContent, wrappedYear, state.trackUriIndex);
 }
 
 export function showPlaylist(id) {
@@ -327,6 +361,10 @@ $.backBtn.addEventListener("click", () => {
   if (!prev) return;
   if (prev.type === "stats") {
     showStatsPage(prev.page);
+    return;
+  }
+  if (prev.type === "wrapped") {
+    showWrappedPage(prev.page);
     return;
   }
   if (prev.type === "catalog") {

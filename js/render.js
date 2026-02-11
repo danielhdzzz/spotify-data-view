@@ -1,4 +1,4 @@
-import { ROW_H, RENDER_BUFFER, state, $, selectPlaylist, showArtist, showAlbum, toggleStatsMenu } from "./app.js";
+import { ROW_H, RENDER_BUFFER, state, $, selectPlaylist, showArtist, showAlbum, toggleStatsMenu, toggleWrappedMenu } from "./app.js";
 import { getSettings } from "./settings.js";
 
 // ── Sidebar ──
@@ -75,6 +75,52 @@ export function renderSidebar(filter) {
     statsGroup.appendChild(toggle);
     statsGroup.appendChild(sub);
     frag.appendChild(statsGroup);
+  }
+
+  if (state.wrappedYears.length > 0) {
+    const wrappedMatches = !q || "wrapped".includes(q) || state.wrappedYears.some((w) => String(w.year).includes(q));
+    if (wrappedMatches) {
+      const wrappedGroup = document.createElement("div");
+      wrappedGroup.className = "sidebar-group" + (state.wrappedOpen ? " open" : "");
+
+      const wToggle = document.createElement("div");
+      wToggle.className = "sidebar-item sidebar-group-toggle";
+      wToggle.dataset.id = "wrapped";
+      const wToggleName = document.createElement("span");
+      wToggleName.className = "sidebar-item-name";
+      wToggleName.textContent = "Wrapped";
+      const wArrow = document.createElement("span");
+      wArrow.className = "sidebar-group-arrow";
+      wArrow.textContent = "\u25B8";
+      wToggle.appendChild(wToggleName);
+      wToggle.appendChild(wArrow);
+      wToggle.addEventListener("click", () => {
+        toggleWrappedMenu();
+        wrappedGroup.classList.toggle("open", state.wrappedOpen);
+      });
+
+      const wSub = document.createElement("div");
+      wSub.className = "sidebar-group-items";
+
+      for (const w of state.wrappedYears) {
+        const wId = "wrapped-" + w.year;
+        if (q && !String(w.year).includes(q) && !"wrapped".includes(q)) continue;
+        const item = document.createElement("div");
+        item.className = "sidebar-item sidebar-sub-item";
+        item.dataset.id = wId;
+        if (wId === state.activeId) item.classList.add("active");
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "sidebar-item-name";
+        nameSpan.textContent = String(w.year);
+        item.appendChild(nameSpan);
+        item.addEventListener("click", () => selectPlaylist(wId));
+        wSub.appendChild(item);
+      }
+
+      wrappedGroup.appendChild(wToggle);
+      wrappedGroup.appendChild(wSub);
+      frag.appendChild(wrappedGroup);
+    }
   }
 
   const sectionEl = document.createElement("div");

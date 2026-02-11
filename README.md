@@ -39,6 +39,7 @@ Then open http://localhost:8888.
 - **Sorting** — click any column header to sort by title, artist, album, or date added
 - **Deduplication** — toggle "hide duplicates" to collapse cross-playlist repeats
 - **Stats** — library overview with unique track/artist/album counts, top artists, top albums, timeline of tracks added per month, and new artist discoveries
+- **Wrapped 2025** — drop your `Wrapped2025.json` alongside your library export to see your year in review: top tracks, listening highlights, notable days, artist race, and more (support for other years coming soon)
 - **Settings** — hide local tracks (stored files not on Spotify) from all views and stats; persisted in localStorage
 - **Privacy** — no data collection, no cookies, no analytics, no servers
 

@@ -11,11 +11,11 @@ function openDB() {
   });
 }
 
-export async function cacheData(libData, playlistFiles) {
+export async function cacheData(libData, playlistFiles, wrappedFiles = []) {
   try {
     const db = await openDB();
     const tx = db.transaction(STORE, "readwrite");
-    tx.objectStore(STORE).put({ libData, playlistFiles }, KEY);
+    tx.objectStore(STORE).put({ libData, playlistFiles, wrappedFiles }, KEY);
     await new Promise((res, rej) => {
       tx.oncomplete = res;
       tx.onerror = rej;

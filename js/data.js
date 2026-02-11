@@ -2,6 +2,7 @@ import { state, $ } from "./app.js";
 import { renderSidebar } from "./render.js";
 import { getSettings } from "./settings.js";
 import { cacheData, getCachedData } from "./cache.js";
+import { parseWrappedFile } from "./wrapped.js";
 
 // ── Data Loading ──
 export async function tryLocalData() {
@@ -21,11 +22,22 @@ export async function tryLocalData() {
       }
     }
 
-    processData(libData, playlistFiles);
+    const wrappedFiles = [];
+    for (let y = 2016; y <= 2030; y++) {
+      try {
+        const wr = await fetch("data/Wrapped" + y + ".json");
+        if (!wr.ok) continue;
+        wrappedFiles.push({ name: "Wrapped" + y + ".json", data: await wr.json() });
+      } catch {
+        continue;
+      }
+    }
+
+    processData(libData, playlistFiles, wrappedFiles);
   } catch {
     const cached = await getCachedData();
     if (cached) {
-      processData(cached.libData, cached.playlistFiles);
+      processData(cached.libData, cached.playlistFiles, cached.wrappedFiles || []);
     } else {
       $.loading.classList.add("hidden");
       $.uploadScreen.style.display = "flex";
@@ -33,7 +45,7 @@ export async function tryLocalData() {
   }
 }
 
-function processData(libData, playlistFiles) {
+function processData(libData, playlistFiles, wrappedFiles = []) {
   state.library = libData;
 
   const allPlaylists = [];
@@ -55,6 +67,14 @@ function processData(libData, playlistFiles) {
 
   buildIndexes();
 
+  // Parse wrapped files
+  state.wrappedYears = [];
+  for (const wf of wrappedFiles) {
+    const parsed = parseWrappedFile(wf.name, wf.data);
+    if (parsed) state.wrappedYears.push(parsed);
+  }
+  state.wrappedYears.sort((a, b) => b.year - a.year);
+
   const totalTracks =
     state.library.tracks.length +
     state.playlists.reduce((s, p) => s + p.trackCount, 0);
@@ -69,7 +89,7 @@ function processData(libData, playlistFiles) {
   $.statsBar.style.display = "";
 
   renderSidebar("");
-  cacheData(libData, playlistFiles);
+  cacheData(libData, playlistFiles, wrappedFiles);
 }
 
 // ── Index Building (deduplicated, respects hideLocalTracks) ──
@@ -105,6 +125,22 @@ export function buildIndexes() {
 
   state.artistIndex = Array.from(artistMap.values()).sort((a, b) => b.count - a.count);
   state.albumIndex = Array.from(albumMap.values()).sort((a, b) => b.count - a.count);
+
+  // Build track URI index for wrapped resolution
+  const trackUriMap = new Map();
+  for (const t of state.library.tracks) {
+    if (t.uri && !trackUriMap.has(t.uri)) {
+      trackUriMap.set(t.uri, { name: t.track, artist: t.artist, album: t.album });
+    }
+  }
+  for (const pl of state.playlists) {
+    for (const t of pl.tracks) {
+      if (t.uri && !t.local && !trackUriMap.has(t.uri)) {
+        trackUriMap.set(t.uri, { name: t.name, artist: t.artist, album: t.album });
+      }
+    }
+  }
+  state.trackUriIndex = trackUriMap;
 }
 
 // ── File Upload ──
@@ -141,7 +177,11 @@ function processUploadedFiles(results) {
     .filter((r) => /^Playlist\d+\.json$/i.test(r.name) && r.data)
     .map((r) => r.data);
 
-  processData(libFile.data, playlistFiles);
+  const wrappedFiles = results
+    .filter((r) => /^Wrapped\d{4}\.json$/i.test(r.name) && r.data)
+    .map((r) => ({ name: r.name, data: r.data }));
+
+  processData(libFile.data, playlistFiles, wrappedFiles);
 }
 
 function handleFiles(files) {
