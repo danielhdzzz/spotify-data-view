@@ -89,13 +89,14 @@ function showStatsPage(id) {
 
   if (!cachedStats) cachedStats = computeStats(state);
 
-  const pageMap = { "stats-albums": "albums", "stats-artists": "artists", "stats-overview": "overview" };
+  const pageMap = { "stats-albums": "albums", "stats-artists": "artists", "stats-overview": "overview", "stats-timeline": "timeline" };
   const page = pageMap[id] || "overview";
-  const titles = { overview: "Overview", artists: "Top Artists", albums: "Top Albums" };
+  const titles = { overview: "Overview", artists: "Top Artists", albums: "Top Albums", timeline: "Timeline" };
   const metas = {
     overview: cachedStats.uniqueTracks.toLocaleString() + " unique tracks (deduplicated)",
     artists: cachedStats.uniqueArtists.toLocaleString() + " unique artists (deduplicated)",
     albums: cachedStats.uniqueAlbums.toLocaleString() + " unique albums (deduplicated)",
+    timeline: "Tracks added over time",
   };
   $.statsTitle.textContent = titles[page];
   $.statsMeta.textContent = metas[page];

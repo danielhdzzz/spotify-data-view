@@ -27,7 +27,7 @@ export function renderSidebar(filter) {
     );
   }
 
-  const statsMatches = !q || "stats overview top artists albums".includes(q);
+  const statsMatches = !q || "stats overview top artists albums timeline added over time".includes(q);
   if (statsMatches) {
     const statsGroup = document.createElement("div");
     statsGroup.className = "sidebar-group" + (state.statsOpen ? " open" : "");
@@ -55,6 +55,7 @@ export function renderSidebar(filter) {
       { id: "stats-overview", label: "Overview" },
       { id: "stats-artists", label: "Top Artists" },
       { id: "stats-albums", label: "Top Albums" },
+      { id: "stats-timeline", label: "Timeline" },
     ];
     for (const s of subItems) {
       if (q && !s.label.toLowerCase().includes(q) && !"stats".includes(q)) continue;

@@ -41,6 +41,19 @@ export function computeStats(state) {
   const totalTracks = state.library.tracks.length +
     state.playlists.reduce((s, p) => s + p.trackCount, 0);
 
+  // Build timeline (tracks added per month)
+  const monthMap = new Map();
+  for (const pl of state.playlists) {
+    for (const t of pl.tracks) {
+      if (!t.date) continue;
+      const key = t.date.slice(0, 7); // "YYYY-MM"
+      monthMap.set(key, (monthMap.get(key) || 0) + 1);
+    }
+  }
+  const timeline = Array.from(monthMap.entries())
+    .map(([month, count]) => ({ month, count }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+
   return {
     uniqueTracks: uniqueCount,
     uniqueArtists: artists.length,
@@ -53,6 +66,7 @@ export function computeStats(state) {
     duplicates: totalTracks - uniqueCount,
     allArtists: artists,
     allAlbums: albums,
+    timeline: timeline,
   };
 }
 
@@ -61,6 +75,11 @@ export function renderStatsPage(container, stats, page, callbacks) {
 
   if (page === "overview") {
     renderOverview(container, stats);
+    return;
+  }
+
+  if (page === "timeline") {
+    renderTimeline(container, stats);
     return;
   }
 
@@ -130,6 +149,90 @@ function renderOverview(container, stats) {
   avgs.appendChild(makeCard("Tracks / Playlist", avgPerPlaylist));
   avgs.appendChild(makeCard("Local Tracks", stats.localTracks.toLocaleString() + " (" + stats.localPct + "%)"));
   container.appendChild(avgs);
+}
+
+function renderTimeline(container, stats) {
+  const data = stats.timeline;
+  if (!data.length) {
+    const empty = document.createElement("div");
+    empty.className = "stats-section";
+    empty.textContent = "No date information available";
+    container.appendChild(empty);
+    return;
+  }
+
+  const max = Math.max(...data.map((d) => d.count));
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  function formatMonth(key) {
+    const [y, m] = key.split("-");
+    return monthNames[parseInt(m, 10) - 1] + " " + y;
+  }
+
+  const total = data.reduce((s, d) => s + d.count, 0);
+  const cards = document.createElement("div");
+  cards.className = "stats-cards";
+  cards.appendChild(makeCard("Total Added", total.toLocaleString()));
+  cards.appendChild(makeCard("Time Span", formatMonth(data[0].month) + " \u2013 " + formatMonth(data[data.length - 1].month)));
+  cards.appendChild(makeCard("Peak Month", formatMonth(data.reduce((a, b) => b.count > a.count ? b : a).month) + " (" + max.toLocaleString() + ")"));
+  cards.appendChild(makeCard("Avg / Month", Math.round(total / data.length).toLocaleString()));
+  container.appendChild(cards);
+
+  container.appendChild(makeSection("Tracks Added Per Month"));
+
+  const chart = document.createElement("div");
+  chart.className = "histogram";
+
+  const tooltip = document.createElement("div");
+  tooltip.className = "histogram-tooltip";
+  document.body.appendChild(tooltip);
+
+  // Clean up tooltip when container is cleared
+  const observer = new MutationObserver(() => {
+    if (!container.contains(chart)) {
+      tooltip.remove();
+      observer.disconnect();
+    }
+  });
+  observer.observe(container, { childList: true });
+
+  for (const d of data) {
+    const col = document.createElement("div");
+    col.className = "histogram-col";
+
+    const bar = document.createElement("div");
+    bar.className = "histogram-bar";
+    bar.style.height = ((d.count / max) * 100).toFixed(1) + "%";
+
+    const text = formatMonth(d.month) + ": " + d.count.toLocaleString() + " tracks";
+    bar.addEventListener("mouseenter", () => {
+      tooltip.textContent = text;
+      tooltip.style.display = "block";
+    });
+    bar.addEventListener("mousemove", (e) => {
+      const tw = tooltip.offsetWidth;
+      const fits = e.clientX + 10 + tw < window.innerWidth;
+      tooltip.style.left = (fits ? e.clientX + 10 : e.clientX - tw - 10) + "px";
+      tooltip.style.top = e.clientY - 28 + "px";
+    });
+    bar.addEventListener("mouseleave", () => {
+      tooltip.style.display = "none";
+    });
+
+    const label = document.createElement("div");
+    label.className = "histogram-label";
+    // Show label for Jan or if few data points
+    const monthNum = parseInt(d.month.split("-")[1], 10);
+    if (monthNum === 1 || data.length <= 24) {
+      label.textContent = data.length <= 24 ? formatMonth(d.month) : d.month.split("-")[0];
+    }
+
+    col.appendChild(bar);
+    col.appendChild(label);
+    chart.appendChild(col);
+  }
+
+  container.appendChild(chart);
 }
 
 function makeCard(label, value) {

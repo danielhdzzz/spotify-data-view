@@ -688,6 +688,66 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Histogram ── */
+.histogram {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 250px;
+  padding: 30px 0 20px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.histogram-col {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.histogram-bar {
+  width: 100%;
+  background: var(--accent);
+  opacity: 0.6;
+  min-height: 1px;
+  transition: opacity 0.1s;
+  position: relative;
+  cursor: default;
+}
+
+.histogram-bar:hover {
+  opacity: 1;
+}
+
+.histogram-tooltip {
+  display: none;
+  position: fixed;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-light);
+  color: var(--text-bright);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 4px 8px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.histogram-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
 /* ── Stats bar ── */
 #stats-bar {
   width: 100%;
