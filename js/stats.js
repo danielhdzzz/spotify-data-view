@@ -41,15 +41,39 @@ export function computeStats(state) {
   const totalTracks = state.library.tracks.length +
     state.playlists.reduce((s, p) => s + p.trackCount, 0);
 
-  // Build timeline (tracks added per month)
+  // Build timeline (tracks added per month) & artist first-seen dates
   const monthMap = new Map();
+  const artistFirstSeen = new Map(); // artist key -> { name, month, totalTracks }
   for (const pl of state.playlists) {
     for (const t of pl.tracks) {
       if (!t.date) continue;
-      const key = t.date.slice(0, 7); // "YYYY-MM"
-      monthMap.set(key, (monthMap.get(key) || 0) + 1);
+      const month = t.date.slice(0, 7); // "YYYY-MM"
+      monthMap.set(month, (monthMap.get(month) || 0) + 1);
+
+      const aKey = t.artist.toLowerCase();
+      if (!artistFirstSeen.has(aKey) || month < artistFirstSeen.get(aKey).month) {
+        artistFirstSeen.set(aKey, { name: t.artist, month });
+      }
     }
   }
+  // Attach total track counts from the deduplicated artist map
+  for (const [aKey, entry] of artistFirstSeen) {
+    const a = artistMap.get(aKey);
+    entry.totalTracks = a ? a.count : 1;
+  }
+  // Group discoveries by month
+  const discoveryMap = new Map();
+  for (const entry of artistFirstSeen.values()) {
+    if (!discoveryMap.has(entry.month)) discoveryMap.set(entry.month, []);
+    discoveryMap.get(entry.month).push(entry);
+  }
+  // Sort artists within each month by total tracks (most significant first)
+  for (const arr of discoveryMap.values()) {
+    arr.sort((a, b) => b.totalTracks - a.totalTracks);
+  }
+  const discoveries = Array.from(discoveryMap.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]));
+
   const timeline = Array.from(monthMap.entries())
     .map(([month, count]) => ({ month, count }))
     .sort((a, b) => a.month.localeCompare(b.month));
@@ -67,6 +91,7 @@ export function computeStats(state) {
     allArtists: artists,
     allAlbums: albums,
     timeline: timeline,
+    discoveries: discoveries,
   };
 }
 
@@ -79,7 +104,7 @@ export function renderStatsPage(container, stats, page, callbacks) {
   }
 
   if (page === "timeline") {
-    renderTimeline(container, stats);
+    renderTimeline(container, stats, callbacks);
     return;
   }
 
@@ -151,7 +176,7 @@ function renderOverview(container, stats) {
   container.appendChild(avgs);
 }
 
-function renderTimeline(container, stats) {
+function renderTimeline(container, stats, callbacks) {
   const data = stats.timeline;
   if (!data.length) {
     const empty = document.createElement("div");
@@ -233,6 +258,40 @@ function renderTimeline(container, stats) {
   }
 
   container.appendChild(chart);
+
+  // New Discoveries
+  if (stats.discoveries.length) {
+    container.appendChild(makeSection("New Discoveries"));
+    const disc = document.createElement("div");
+    disc.className = "discoveries";
+
+    for (const [month, artists] of stats.discoveries) {
+      const row = document.createElement("div");
+      row.className = "discovery-month";
+
+      const label = document.createElement("div");
+      label.className = "discovery-month-label";
+      label.textContent = formatMonth(month);
+      row.appendChild(label);
+
+      const chips = document.createElement("div");
+      chips.className = "discovery-chips";
+
+      for (const a of artists) {
+        const chip = document.createElement("span");
+        chip.className = "discovery-chip";
+        chip.textContent = a.name;
+        chip.title = a.totalTracks + " tracks in library";
+        chip.addEventListener("click", () => callbacks.onArtist(a.name));
+        chips.appendChild(chip);
+      }
+
+      row.appendChild(chips);
+      disc.appendChild(row);
+    }
+
+    container.appendChild(disc);
+  }
 }
 
 function makeCard(label, value) {

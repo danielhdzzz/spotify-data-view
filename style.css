@@ -748,6 +748,50 @@ body {
   white-space: nowrap;
 }
 
+/* ── Discoveries ── */
+.discoveries {
+  margin-top: 20px;
+}
+
+.discovery-month {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: baseline;
+}
+
+.discovery-month-label {
+  width: 70px;
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.discovery-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.discovery-chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-bright);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-light);
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.discovery-chip:hover {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+}
+
 /* ── Stats bar ── */
 #stats-bar {
   width: 100%;
