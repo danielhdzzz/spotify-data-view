@@ -692,6 +692,10 @@ body {
   margin-bottom: 0;
 }
 
+.stats-section ~ .stats-section {
+  margin-top: 48px;
+}
+
 .stats-list {
   margin-bottom: 20px;
 }
