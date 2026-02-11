@@ -1,6 +1,7 @@
 import { initData, tryLocalData } from "./data.js";
 import { initRender, renderSidebar, renderTrackList, renderCatalogList, renderVisibleRows, renderVisibleCatalogRows, updateSortHeaders } from "./render.js";
 import { computeStats, renderStatsPage } from "./stats.js";
+import { loadSettings, saveSettings, getSettings } from "./settings.js";
 
 // ── Constants ──
 export const ROW_H = 34;
@@ -55,6 +56,10 @@ export const $ = {
   statsContent: document.getElementById("stats-content"),
   statsTitle: document.getElementById("stats-title"),
   statsMeta: document.getElementById("stats-meta"),
+  settingsBtn: document.getElementById("settings-btn"),
+  settingsOverlay: document.getElementById("settings-overlay"),
+  settingsClose: document.getElementById("settings-close"),
+  hideLocalToggle: document.getElementById("hide-local-toggle"),
 };
 
 // ── Navigation ──
@@ -71,7 +76,16 @@ export function toggleStatsMenu() {
   state.statsOpen = !state.statsOpen;
 }
 
-let cachedStats = null;
+export let cachedStats = null;
+
+export function invalidateCachedStats() {
+  cachedStats = null;
+}
+
+export function filterLocalTracks(tracks) {
+  if (!getSettings().hideLocalTracks) return tracks;
+  return tracks.filter((t) => !t.local);
+}
 
 function showStatsPage(id) {
   state.activeId = id;
@@ -140,14 +154,14 @@ export function showPlaylist(id) {
 
   if (id === "liked") {
     $.mainTitle.textContent = "Liked Songs";
-    state.currentTracks = normalizeLibraryTracks(state.library.tracks);
+    state.currentTracks = filterLocalTracks(normalizeLibraryTracks(state.library.tracks));
     $.mainMeta.textContent = state.currentTracks.length + " tracks";
   } else {
     const pl = state.playlists.find((p) => p.id === id);
     $.mainTitle.textContent = pl.name;
-    state.currentTracks = pl.tracks;
+    state.currentTracks = filterLocalTracks(pl.tracks);
     $.mainMeta.textContent =
-      pl.trackCount + " tracks \u00b7 updated " + pl.date;
+      state.currentTracks.length + " tracks \u00b7 updated " + pl.date;
   }
 
   $.trackFilter.value = "";
@@ -231,10 +245,11 @@ export function showArtist(artistName) {
     }
   }
 
+  const filtered = filterLocalTracks(tracks);
   showDetailView(
     artistName,
-    tracks.length + " tracks across your library",
-    tracks,
+    filtered.length + " tracks across your library",
+    filtered,
   );
 }
 
@@ -270,10 +285,11 @@ export function showAlbum(albumName, artistName) {
     }
   }
 
+  const filtered = filterLocalTracks(tracks);
   showDetailView(
     albumName + " \u2014 " + artistName,
-    tracks.length + " tracks across your library",
-    tracks,
+    filtered.length + " tracks across your library",
+    filtered,
   );
 }
 
@@ -321,7 +337,9 @@ document.addEventListener("keydown", (e) => {
     $.trackFilter.select();
   }
   if (e.key === "Escape") {
-    if (document.activeElement === $.sidebarSearch) {
+    if ($.settingsOverlay.style.display !== "none") {
+      $.settingsOverlay.style.display = "none";
+    } else if (document.activeElement === $.sidebarSearch) {
       $.sidebarSearch.value = "";
       $.sidebarSearch.blur();
       renderSidebar("");
@@ -345,6 +363,40 @@ $.viewport.addEventListener("scroll", () => {
 // ── Sidebar Search ──
 $.sidebarSearch.addEventListener("input", () => {
   renderSidebar($.sidebarSearch.value);
+});
+
+// ── Settings ──
+loadSettings();
+$.hideLocalToggle.checked = getSettings().hideLocalTracks;
+
+$.settingsBtn.addEventListener("click", () => {
+  $.settingsOverlay.style.display = "";
+});
+
+$.settingsClose.addEventListener("click", () => {
+  $.settingsOverlay.style.display = "none";
+});
+
+$.settingsOverlay.addEventListener("click", (e) => {
+  if (e.target === $.settingsOverlay) $.settingsOverlay.style.display = "none";
+});
+
+$.hideLocalToggle.addEventListener("change", () => {
+  const s = getSettings();
+  s.hideLocalTracks = $.hideLocalToggle.checked;
+  saveSettings(s);
+  invalidateCachedStats();
+  // Reapply current view
+  if (state.activeId) {
+    if (state.isDetailView) {
+      const prev = state.navHistory[state.navHistory.length - 1];
+      if (prev) {
+        $.backBtn.click();
+      }
+    } else {
+      selectPlaylist(state.activeId);
+    }
+  }
 });
 
 // ── Init ──

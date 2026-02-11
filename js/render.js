@@ -1,4 +1,5 @@
 import { ROW_H, RENDER_BUFFER, state, $, selectPlaylist, showArtist, showAlbum, toggleStatsMenu } from "./app.js";
+import { getSettings } from "./settings.js";
 
 // ── Sidebar ──
 export function renderSidebar(filter) {
@@ -143,6 +144,9 @@ function refilter() {
         t.artist.toLowerCase().includes(q) ||
         t.album.toLowerCase().includes(q),
     );
+  }
+  if (getSettings().hideLocalTracks) {
+    state.filteredTracks = state.filteredTracks.filter((t) => !t.local);
   }
   applyDedup();
   applySort();

@@ -130,7 +130,21 @@
 
     <div id="stats-bar" style="display: none">
       <span class="stats-text"></span>
+      <button id="settings-btn" title="Settings">settings</button>
       <a href="https://github.com/danielhdzzz/spotify-data-view" target="_blank" rel="noopener" style="color:var(--text-dim);text-decoration:none">github</a>
+    </div>
+
+    <div id="settings-overlay" style="display:none">
+      <div id="settings-panel">
+        <div id="settings-header">
+          <span>Settings</span>
+          <button id="settings-close">&times;</button>
+        </div>
+        <label class="settings-row">
+          <input type="checkbox" id="hide-local-toggle" />
+          <span>Hide local tracks</span>
+        </label>
+      </div>
     </div>
 
     <script type="module" src="js/app.js"></script>

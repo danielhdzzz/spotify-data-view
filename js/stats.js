@@ -1,6 +1,9 @@
 // ── Stats computation & rendering ──
 
+import { getSettings } from "./settings.js";
+
 export function computeStats(state) {
+  const hideLocal = getSettings().hideLocalTracks;
   const seen = new Set();
   const artistMap = new Map();
   const albumMap = new Map();
@@ -29,6 +32,7 @@ export function computeStats(state) {
   }
   for (const pl of state.playlists) {
     for (const t of pl.tracks) {
+      if (hideLocal && t.local) continue;
       addTrack(t.name, t.artist, t.album, t.uri, t.local);
     }
   }
@@ -39,13 +43,14 @@ export function computeStats(state) {
     .sort((a, b) => b.count - a.count);
 
   const totalTracks = state.library.tracks.length +
-    state.playlists.reduce((s, p) => s + p.trackCount, 0);
+    state.playlists.reduce((s, p) => s + (hideLocal ? p.tracks.filter((t) => !t.local).length : p.trackCount), 0);
 
   // Build timeline (tracks added per month) & artist first-seen dates
   const monthMap = new Map();
   const artistFirstSeen = new Map(); // artist key -> { name, month, totalTracks }
   for (const pl of state.playlists) {
     for (const t of pl.tracks) {
+      if (hideLocal && t.local) continue;
       if (!t.date) continue;
       const month = t.date.slice(0, 7); // "YYYY-MM"
       monthMap.set(month, (monthMap.get(month) || 0) + 1);
