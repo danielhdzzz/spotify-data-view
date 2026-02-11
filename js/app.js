@@ -2,6 +2,7 @@ import { initData, tryLocalData, buildIndexes } from "./data.js";
 import { initRender, renderSidebar, renderTrackList, renderCatalogList, renderVisibleRows, renderVisibleCatalogRows, updateSortHeaders } from "./render.js";
 import { computeStats, renderStatsPage } from "./stats.js";
 import { loadSettings, saveSettings, getSettings } from "./settings.js";
+import { clearCachedData } from "./cache.js";
 
 // ── Constants ──
 export const ROW_H = 34;
@@ -59,6 +60,7 @@ export const $ = {
   settingsBtn: document.getElementById("settings-btn"),
   settingsOverlay: document.getElementById("settings-overlay"),
   hideLocalToggle: document.getElementById("hide-local-toggle"),
+  clearCacheBtn: document.getElementById("clear-cache-btn"),
   privacyOverlay: document.getElementById("privacy-overlay"),
 };
 
@@ -391,6 +393,11 @@ document.querySelectorAll(".privacy-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     $.privacyOverlay.style.display = "";
   });
+});
+
+$.clearCacheBtn.addEventListener("click", async () => {
+  await clearCachedData();
+  location.reload();
 });
 
 $.hideLocalToggle.addEventListener("change", () => {

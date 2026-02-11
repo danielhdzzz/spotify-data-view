@@ -1,6 +1,7 @@
 import { state, $ } from "./app.js";
 import { renderSidebar } from "./render.js";
 import { getSettings } from "./settings.js";
+import { cacheData, getCachedData } from "./cache.js";
 
 // ── Data Loading ──
 export async function tryLocalData() {
@@ -22,8 +23,13 @@ export async function tryLocalData() {
 
     processData(libData, playlistFiles);
   } catch {
-    $.loading.classList.add("hidden");
-    $.uploadScreen.style.display = "flex";
+    const cached = await getCachedData();
+    if (cached) {
+      processData(cached.libData, cached.playlistFiles);
+    } else {
+      $.loading.classList.add("hidden");
+      $.uploadScreen.style.display = "flex";
+    }
   }
 }
 
@@ -63,6 +69,7 @@ function processData(libData, playlistFiles) {
   $.statsBar.style.display = "";
 
   renderSidebar("");
+  cacheData(libData, playlistFiles);
 }
 
 // ── Index Building (deduplicated, respects hideLocalTracks) ──

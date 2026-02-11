@@ -901,6 +901,21 @@ body {
   cursor: pointer;
 }
 
+.overlay-btn {
+  background: none;
+  border: none;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 6px 0;
+  text-align: left;
+}
+
+.overlay-btn:hover {
+  color: var(--text);
+}
+
 /* ── Footer links (upload screen) ── */
 .footer-links {
   display: flex;
