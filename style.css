@@ -508,6 +508,153 @@ body {
   display: none;
 }
 
+/* ── Stats View ── */
+#stats-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 29px);
+  min-width: 0;
+}
+
+#stats-header {
+  padding: 16px 20px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+#stats-title {
+  font-family: var(--sans);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+#stats-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  padding-bottom: 3px;
+}
+
+#stats-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+
+.stats-cards {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stats-card {
+  flex: 1;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stats-card-value {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-bright);
+}
+
+.stats-card-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.stats-section {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 10px 0 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.stats-list {
+  margin-bottom: 20px;
+}
+
+.stats-row {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  height: var(--row-h);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.08s;
+  gap: 8px;
+  position: relative;
+}
+
+.stats-row-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--accent);
+  opacity: 0.07;
+  pointer-events: none;
+  transition: opacity 0.08s;
+}
+
+.stats-row:hover .stats-row-bar {
+  opacity: 0.13;
+}
+
+.stats-row:hover {
+  background: var(--bg-hover);
+}
+
+.stats-row-rank {
+  width: 30px;
+  text-align: right;
+  padding-right: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.stats-row-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-bright);
+}
+
+.stats-row:hover .stats-row-name {
+  color: var(--accent);
+}
+
+.stats-row-detail {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
 /* ── Stats bar ── */
 #stats-bar {
   width: 100%;

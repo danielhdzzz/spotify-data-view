@@ -1,5 +1,6 @@
 import { initData, tryLocalData } from "./data.js";
 import { initRender, renderSidebar, renderTrackList, renderCatalogList, renderVisibleRows, renderVisibleCatalogRows, updateSortHeaders } from "./render.js";
+import { computeStats, renderStats } from "./stats.js";
 
 // ── Constants ──
 export const ROW_H = 34;
@@ -49,12 +50,44 @@ export const $ = {
   dropZone: document.getElementById("drop-zone"),
   fileInput: document.getElementById("file-input"),
   uploadError: document.getElementById("upload-error"),
+  statsView: document.getElementById("stats-view"),
+  statsContent: document.getElementById("stats-content"),
 };
 
 // ── Navigation ──
 export function selectPlaylist(id) {
   state.navHistory = [];
+  if (id === "stats") {
+    showStats();
+    return;
+  }
   showPlaylist(id);
+}
+
+let cachedStats = null;
+
+function showStats() {
+  state.activeId = "stats";
+  state.isDetailView = false;
+  state.catalogMode = null;
+  $.main.style.display = "none";
+  $.statsView.style.display = "flex";
+
+  document.querySelectorAll(".sidebar-item").forEach((el) => {
+    el.classList.toggle("active", el.dataset.id === "stats");
+  });
+
+  if (!cachedStats) cachedStats = computeStats(state);
+  renderStats($.statsContent, cachedStats, {
+    onArtist(name) {
+      state.navHistory.push({ type: "stats" });
+      showArtist(name);
+    },
+    onAlbum(name, artist) {
+      state.navHistory.push({ type: "stats" });
+      showAlbum(name, artist);
+    },
+  });
 }
 
 export function showPlaylist(id) {
@@ -62,6 +95,8 @@ export function showPlaylist(id) {
   state.isDetailView = false;
   state.catalogMode = null;
   $.backBtn.style.display = "none";
+  $.statsView.style.display = "none";
+  $.main.style.display = "";
 
   document.querySelectorAll(".sidebar-item").forEach((el) => {
     el.classList.toggle("active", el.dataset.id === id);
@@ -104,6 +139,8 @@ export function showPlaylist(id) {
 export function showCatalogList(mode) {
   state.catalogMode = mode;
   state.isDetailView = false;
+  $.statsView.style.display = "none";
+  $.main.style.display = "";
   const index = mode === "artists" ? state.artistIndex : state.albumIndex;
   const label = mode === "artists" ? "Artists" : "Albums";
 
@@ -128,6 +165,8 @@ export function showDetailView(title, meta, tracks) {
     .forEach((el) => el.classList.remove("active"));
   state.isDetailView = true;
   state.catalogMode = null;
+  $.statsView.style.display = "none";
+  $.main.style.display = "";
   $.backBtn.style.display = "block";
   $.colHeader.style.display = "";
   $.trackFilter.placeholder = "filter tracks...";
@@ -231,6 +270,10 @@ function normalizeLibraryTracks(tracks) {
 $.backBtn.addEventListener("click", () => {
   const prev = state.navHistory.pop();
   if (!prev) return;
+  if (prev.type === "stats") {
+    showStats();
+    return;
+  }
   if (prev.type === "catalog") {
     state.activeId = prev.mode;
     document.querySelectorAll(".sidebar-item").forEach((el) => {

@@ -27,6 +27,10 @@ export function renderSidebar(filter) {
     );
   }
 
+  if (!q || "stats".includes(q)) {
+    frag.appendChild(makeSidebarItem("stats", "Stats", "", ""));
+  }
+
   const sectionEl = document.createElement("div");
   sectionEl.className = "sidebar-section";
   sectionEl.textContent = "Playlists";
