@@ -1,4 +1,4 @@
-import { initData, tryLocalData } from "./data.js";
+import { initData, tryLocalData, buildIndexes } from "./data.js";
 import { initRender, renderSidebar, renderTrackList, renderCatalogList, renderVisibleRows, renderVisibleCatalogRows, updateSortHeaders } from "./render.js";
 import { computeStats, renderStatsPage } from "./stats.js";
 import { loadSettings, saveSettings, getSettings } from "./settings.js";
@@ -386,6 +386,7 @@ $.hideLocalToggle.addEventListener("change", () => {
   s.hideLocalTracks = $.hideLocalToggle.checked;
   saveSettings(s);
   invalidateCachedStats();
+  if (state.library) buildIndexes();
   // Reapply current view
   if (state.activeId) {
     if (state.isDetailView) {

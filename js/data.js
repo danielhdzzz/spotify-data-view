@@ -1,5 +1,6 @@
 import { state, $ } from "./app.js";
 import { renderSidebar } from "./render.js";
+import { getSettings } from "./settings.js";
 
 // ── Data Loading ──
 export async function tryLocalData() {
@@ -46,49 +47,7 @@ function processData(libData, playlistFiles) {
     tracks: normalizePlaylistTracks(p.items),
   }));
 
-  // Build artist index
-  const artistMap = new Map();
-  for (const t of state.library.tracks) {
-    const key = t.artist.toLowerCase();
-    if (!artistMap.has(key))
-      artistMap.set(key, { name: t.artist, count: 0 });
-    artistMap.get(key).count++;
-  }
-  for (const pl of state.playlists) {
-    for (const t of pl.tracks) {
-      const key = t.artist.toLowerCase();
-      if (!artistMap.has(key))
-        artistMap.set(key, { name: t.artist, count: 0 });
-      artistMap.get(key).count++;
-    }
-  }
-  state.artistIndex = Array.from(artistMap.values()).sort(
-    (a, b) => b.count - a.count,
-  );
-
-  // Build album index
-  const albumMap = new Map();
-  for (const t of state.library.tracks) {
-    const key = (t.album + "|||" + t.artist).toLowerCase();
-    if (!albumMap.has(key))
-      albumMap.set(key, { name: t.album, artist: t.artist, count: 0 });
-    albumMap.get(key).count++;
-  }
-  for (const pl of state.playlists) {
-    for (const t of pl.tracks) {
-      const key = (t.album + "|||" + t.artist).toLowerCase();
-      if (!albumMap.has(key))
-        albumMap.set(key, {
-          name: t.album,
-          artist: t.artist,
-          count: 0,
-        });
-      albumMap.get(key).count++;
-    }
-  }
-  state.albumIndex = Array.from(albumMap.values()).sort(
-    (a, b) => b.count - a.count,
-  );
+  buildIndexes();
 
   const totalTracks =
     state.library.tracks.length +
@@ -104,6 +63,41 @@ function processData(libData, playlistFiles) {
   $.statsBar.style.display = "";
 
   renderSidebar("");
+}
+
+// ── Index Building (deduplicated, respects hideLocalTracks) ──
+export function buildIndexes() {
+  const hideLocal = getSettings().hideLocalTracks;
+  const seen = new Set();
+  const artistMap = new Map();
+  const albumMap = new Map();
+
+  function addTrack(name, artist, album, uri, isLocal) {
+    if (hideLocal && isLocal) return;
+    const key = uri || (name + "|||" + artist).toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+
+    const aKey = artist.toLowerCase();
+    if (!artistMap.has(aKey)) artistMap.set(aKey, { name: artist, count: 0 });
+    artistMap.get(aKey).count++;
+
+    const abKey = (album + "|||" + artist).toLowerCase();
+    if (!albumMap.has(abKey)) albumMap.set(abKey, { name: album, artist: artist, count: 0 });
+    albumMap.get(abKey).count++;
+  }
+
+  for (const t of state.library.tracks) {
+    addTrack(t.track, t.artist, t.album, t.uri, false);
+  }
+  for (const pl of state.playlists) {
+    for (const t of pl.tracks) {
+      addTrack(t.name, t.artist, t.album, t.uri, t.local);
+    }
+  }
+
+  state.artistIndex = Array.from(artistMap.values()).sort((a, b) => b.count - a.count);
+  state.albumIndex = Array.from(albumMap.values()).sort((a, b) => b.count - a.count);
 }
 
 // ── File Upload ──
