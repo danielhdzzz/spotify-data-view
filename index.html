@@ -42,13 +42,14 @@
         font-family: var(--sans);
         font-size: 13px;
         display: flex;
+        flex-wrap: wrap;
       }
 
       /* ── Sidebar ── */
       #sidebar {
         width: 280px;
         min-width: 280px;
-        height: 100vh;
+        height: calc(100vh - 29px);
         border-right: 1px solid var(--border);
         display: flex;
         flex-direction: column;
@@ -157,7 +158,7 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        height: 100vh;
+        height: calc(100vh - 29px);
         min-width: 0;
       }
 
@@ -516,13 +517,15 @@
 
       /* ── Stats bar ── */
       #stats-bar {
+        width: 100%;
         padding: 6px 14px;
         font-family: var(--mono);
         font-size: 10px;
         color: var(--text-dim);
         border-top: 1px solid var(--border);
         display: flex;
-        gap: 16px;
+        justify-content: space-between;
+        align-items: center;
         flex-shrink: 0;
       }
     </style>
@@ -569,10 +572,6 @@
         />
       </div>
       <div id="playlist-list"></div>
-      <div id="stats-bar">
-        <span class="stats-text"></span>
-        <a href="https://github.com/danielhdzzz/spotify-data-view" target="_blank" rel="noopener" style="color:var(--text-dim);text-decoration:none;margin-left:auto">github</a>
-      </div>
     </div>
 
     <div id="main" style="display: none">
@@ -604,6 +603,11 @@
         <div id="track-runway"></div>
       </div>
       <div id="empty-state" style="display: none">No tracks found</div>
+    </div>
+
+    <div id="stats-bar" style="display: none">
+      <span class="stats-text"></span>
+      <a href="https://github.com/danielhdzzz/spotify-data-view" target="_blank" rel="noopener" style="color:var(--text-dim);text-decoration:none">github</a>
     </div>
 
     <script>
@@ -755,6 +759,7 @@
           $uploadScreen.style.display = "none";
           $sidebar.style.display = "";
           $main.style.display = "";
+          $statsBar.style.display = "";
 
           renderSidebar("");
         }
