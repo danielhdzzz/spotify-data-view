@@ -852,15 +852,16 @@
           handleFiles(e.target.files),
         );
 
-        $dropZone.addEventListener("dragover", (e) => {
+        $uploadScreen.addEventListener("dragover", (e) => {
           e.preventDefault();
           $dropZone.classList.add("dragover");
         });
-        $dropZone.addEventListener("dragleave", () =>
-          $dropZone.classList.remove("dragover"),
-        );
+        $uploadScreen.addEventListener("dragleave", (e) => {
+          if (!$uploadScreen.contains(e.relatedTarget))
+            $dropZone.classList.remove("dragover");
+        });
 
-        $dropZone.addEventListener("drop", async (e) => {
+        $uploadScreen.addEventListener("drop", async (e) => {
           e.preventDefault();
           $dropZone.classList.remove("dragover");
           $uploadError.style.display = "none";
