@@ -62,6 +62,11 @@ body {
   text-transform: uppercase;
   color: var(--text-dim);
   margin-bottom: 10px;
+  cursor: pointer;
+}
+
+#sidebar-header h1:hover {
+  color: var(--text);
 }
 
 #sidebar-search {
@@ -198,7 +203,9 @@ body {
 }
 
 #back-btn,
-#export-btn {
+#export-csv-btn,
+#export-txt-btn,
+.header-btn {
   background: none;
   border: 1px solid var(--border);
   color: var(--text-dim);
@@ -212,14 +219,68 @@ body {
 }
 
 #back-btn:hover,
-#export-btn:hover {
+#export-csv-btn:hover,
+#export-txt-btn:hover,
+.header-btn:hover {
   color: var(--text);
   border-color: var(--border-light);
 }
 
-#export-btn.visible {
+#export-global-btns .header-btn {
+  display: block;
+}
+
+#export-txt-btn.visible {
   display: block;
   margin-left: auto;
+}
+
+#export-csv-btn.visible {
+  display: block;
+}
+
+.export-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  padding: 6px 0;
+}
+
+.export-row-label {
+  flex-shrink: 0;
+}
+
+.export-options {
+  display: flex;
+  gap: 0;
+}
+
+.export-options button {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color 0.1s,
+    background 0.1s,
+    border-color 0.1s;
+  margin-left: -1px;
+}
+
+.export-options button:first-child {
+  margin-left: 0;
+}
+
+.export-options button:hover {
+  color: var(--text);
+  background: var(--bg-hover);
 }
 
 #main-title {

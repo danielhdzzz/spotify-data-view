@@ -66,7 +66,8 @@ export const $ = {
   hideLocalToggle: document.getElementById("hide-local-toggle"),
   clearCacheBtn: document.getElementById("clear-cache-btn"),
   privacyOverlay: document.getElementById("privacy-overlay"),
-  exportBtn: document.getElementById("export-btn"),
+  exportCsvBtn: document.getElementById("export-csv-btn"),
+  exportTxtBtn: document.getElementById("export-txt-btn"),
 };
 
 // ── Theme ──
@@ -199,11 +200,14 @@ export function showPlaylist(id) {
     return;
   }
 
+  $.trackFilterWrap.style.display = "";
   $.colHeader.style.display = "";
   $.trackFilter.placeholder = "filter tracks...";
   $.dedupLabel.style.display = "none";
   $.dedupToggle.checked = false;
-  $.exportBtn.classList.add("visible");
+  $.exportCsvBtn.classList.add("visible");
+  $.exportTxtBtn.classList.add("visible");
+
 
   if (id === "liked") {
     $.mainTitle.textContent = "Liked Songs";
@@ -230,7 +234,10 @@ export function showCatalogList(mode) {
   state.isDetailView = false;
   $.statsView.style.display = "none";
   $.main.style.display = "";
-  $.exportBtn.classList.remove("visible");
+  $.exportCsvBtn.classList.remove("visible");
+  $.exportTxtBtn.classList.remove("visible");
+
+  $.trackFilterWrap.style.display = "";
   const index = mode === "artists" ? state.artistIndex : state.albumIndex;
   const label = mode === "artists" ? "Artists" : "Albums";
 
@@ -258,7 +265,10 @@ export function showDetailView(title, meta, tracks) {
   $.statsView.style.display = "none";
   $.main.style.display = "";
   $.backBtn.style.display = "block";
-  $.exportBtn.classList.remove("visible");
+  $.exportCsvBtn.classList.remove("visible");
+  $.exportTxtBtn.classList.remove("visible");
+
+  $.trackFilterWrap.style.display = "";
   $.colHeader.style.display = "";
   $.trackFilter.placeholder = "filter tracks...";
   $.dedupLabel.style.display = "flex";
@@ -489,6 +499,26 @@ $.hideLocalToggle.addEventListener("change", () => {
   }
 });
 
+// ── Library title (reset to home) ──
+document.getElementById("library-title").addEventListener("click", () => {
+  state.activeId = null;
+  state.isDetailView = false;
+  state.catalogMode = null;
+  state.navHistory = [];
+  $.statsView.style.display = "none";
+  $.main.style.display = "";
+  $.backBtn.style.display = "none";
+  $.exportCsvBtn.classList.remove("visible");
+  $.exportTxtBtn.classList.remove("visible");
+  $.colHeader.style.display = "none";
+  $.trackFilterWrap.style.display = "none";
+  $.viewport.style.display = "none";
+  $.emptyState.style.display = "none";
+  $.mainTitle.textContent = "Select a playlist";
+  $.mainMeta.textContent = "";
+  document.querySelectorAll(".sidebar-item").forEach((el) => el.classList.remove("active"));
+});
+
 // ── CSV Export ──
 function csvEscape(val) {
   if (!val) return "";
@@ -499,7 +529,7 @@ function csvEscape(val) {
   return s;
 }
 
-$.exportBtn.addEventListener("click", () => {
+$.exportCsvBtn.addEventListener("click", () => {
   const tracks = state.currentTracks;
   if (!tracks || tracks.length === 0) return;
 
@@ -509,15 +539,72 @@ $.exportBtn.addEventListener("click", () => {
       [csvEscape(t.name), csvEscape(t.artist), csvEscape(t.album), csvEscape(t.uri || "")].join(","),
     );
   }
+  downloadFile(rows.join("\n"), ($.mainTitle.textContent || "export") + ".csv", "text/csv;charset=utf-8");
+});
 
-  const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
+$.exportTxtBtn.addEventListener("click", () => {
+  const tracks = state.currentTracks;
+  if (!tracks || tracks.length === 0) return;
+
+  const lines = tracks.map((t) => t.artist + " - " + t.name);
+  downloadFile(lines.join("\n"), ($.mainTitle.textContent || "export") + ".txt", "text/plain;charset=utf-8");
+});
+
+function getAllTracks() {
+  const tracks = [];
+  const likedTracks = filterLocalTracks(normalizeLibraryTracks(state.library.tracks));
+  for (const t of likedTracks) {
+    tracks.push({ playlist: "Liked Songs", ...t });
+  }
+  for (const pl of state.playlists) {
+    for (const t of filterLocalTracks(pl.tracks)) {
+      tracks.push({ playlist: pl.name, ...t });
+    }
+  }
+  return tracks;
+}
+
+function downloadFile(content, filename, type) {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = ($.mainTitle.textContent || "export") + ".csv";
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-});
+}
+
+function exportAllCsv() {
+  if (!state.library) return;
+  const tracks = getAllTracks();
+  const rows = [["Playlist Name", "Track Name", "Artist", "Album", "Spotify URI"].join(",")];
+  for (const t of tracks) {
+    rows.push(
+      [csvEscape(t.playlist), csvEscape(t.name), csvEscape(t.artist), csvEscape(t.album), csvEscape(t.uri || "")].join(","),
+    );
+  }
+  downloadFile(rows.join("\n"), "spotify-library.csv", "text/csv;charset=utf-8");
+}
+
+function exportAllTxt() {
+  if (!state.library) return;
+  const tracks = getAllTracks();
+  let currentPlaylist = null;
+  const lines = [];
+  for (const t of tracks) {
+    if (t.playlist !== currentPlaylist) {
+      if (currentPlaylist !== null) lines.push("");
+      lines.push("## " + t.playlist);
+      lines.push("");
+      currentPlaylist = t.playlist;
+    }
+    lines.push(t.artist + " - " + t.name);
+  }
+  downloadFile(lines.join("\n"), "spotify-library.txt", "text/plain;charset=utf-8");
+}
+
+document.querySelectorAll(".export-all-csv-btn").forEach((btn) => btn.addEventListener("click", exportAllCsv));
+document.querySelectorAll(".export-all-txt-btn").forEach((btn) => btn.addEventListener("click", exportAllTxt));
 
 // ── Init ──
 initRender();

@@ -114,7 +114,7 @@
 
     <div id="sidebar" style="display: none">
       <div id="sidebar-header">
-        <h1>Library</h1>
+        <h1 id="library-title">Library</h1>
         <input
           type="text"
           id="sidebar-search"
@@ -130,9 +130,10 @@
         <button id="back-btn">&larr; back</button>
         <div id="main-title">Select a playlist</div>
         <div id="main-meta"></div>
-        <button id="export-btn">export csv</button>
+        <button id="export-txt-btn">export txt</button>
+        <button id="export-csv-btn">export csv</button>
       </div>
-      <div id="track-filter-wrap">
+      <div id="track-filter-wrap" style="display: none">
         <input
           type="text"
           id="track-filter"
@@ -143,7 +144,7 @@
           ><input type="checkbox" id="dedup-toggle" />hide duplicates</label
         >
       </div>
-      <div id="col-header">
+      <div id="col-header" style="display: none">
         <span class="col-num">#</span>
         <span class="col-track">Title</span>
         <span class="col-artist">Artist</span>
@@ -197,11 +198,20 @@
             <label for="theme-dark">dark</label>
           </div>
         </div>
+        <div class="export-row">
+          <span class="export-row-label">Export</span>
+          <div class="export-options">
+            <button class="export-all-txt-btn">TXT</button>
+            <button class="export-all-csv-btn">CSV</button>
+          </div>
+        </div>
         <label class="overlay-row">
           <input type="checkbox" id="hide-local-toggle" />
           <span>Hide local tracks</span>
         </label>
-        <button id="clear-cache-btn" class="overlay-btn">Clear cached data</button>
+        <button id="clear-cache-btn" class="overlay-btn">
+          Clear cached data
+        </button>
       </div>
     </div>
 
