@@ -555,6 +555,7 @@
       </div>
       <div id="upload-error"></div>
       <p>Your data never leaves your browser.</p>
+      <a href="https://github.com/danielhdzzz/spotify-data-view" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:10px;color:var(--text-dim);text-decoration:none;margin-top:8px">github</a>
     </div>
 
     <div id="sidebar" style="display: none">
@@ -568,7 +569,10 @@
         />
       </div>
       <div id="playlist-list"></div>
-      <div id="stats-bar"></div>
+      <div id="stats-bar">
+        <span class="stats-text"></span>
+        <a href="https://github.com/danielhdzzz/spotify-data-view" target="_blank" rel="noopener" style="color:var(--text-dim);text-decoration:none;margin-left:auto">github</a>
+      </div>
     </div>
 
     <div id="main" style="display: none">
@@ -744,7 +748,8 @@
           const totalTracks =
             library.tracks.length +
             playlists.reduce((s, p) => s + p.trackCount, 0);
-          $statsBar.textContent = `${library.tracks.length} liked songs \u00b7 ${playlists.length} playlists \u00b7 ${totalTracks.toLocaleString()} total tracks`;
+          const $statsText = $statsBar.querySelector('.stats-text');
+          if ($statsText) $statsText.textContent = `${library.tracks.length} liked songs \u00b7 ${playlists.length} playlists \u00b7 ${totalTracks.toLocaleString()} total tracks`;
 
           $loading.classList.add("hidden");
           $uploadScreen.style.display = "none";
