@@ -197,7 +197,8 @@ body {
   flex-shrink: 0;
 }
 
-#back-btn {
+#back-btn,
+#export-btn {
   background: none;
   border: 1px solid var(--border);
   color: var(--text-dim);
@@ -210,9 +211,15 @@ body {
   flex-shrink: 0;
 }
 
-#back-btn:hover {
+#back-btn:hover,
+#export-btn:hover {
   color: var(--text);
   border-color: var(--border-light);
+}
+
+#export-btn.visible {
+  display: block;
+  margin-left: auto;
 }
 
 #main-title {

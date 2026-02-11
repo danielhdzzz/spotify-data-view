@@ -66,6 +66,7 @@ export const $ = {
   hideLocalToggle: document.getElementById("hide-local-toggle"),
   clearCacheBtn: document.getElementById("clear-cache-btn"),
   privacyOverlay: document.getElementById("privacy-overlay"),
+  exportBtn: document.getElementById("export-btn"),
 };
 
 // ── Theme ──
@@ -202,6 +203,7 @@ export function showPlaylist(id) {
   $.trackFilter.placeholder = "filter tracks...";
   $.dedupLabel.style.display = "none";
   $.dedupToggle.checked = false;
+  $.exportBtn.classList.add("visible");
 
   if (id === "liked") {
     $.mainTitle.textContent = "Liked Songs";
@@ -228,6 +230,7 @@ export function showCatalogList(mode) {
   state.isDetailView = false;
   $.statsView.style.display = "none";
   $.main.style.display = "";
+  $.exportBtn.classList.remove("visible");
   const index = mode === "artists" ? state.artistIndex : state.albumIndex;
   const label = mode === "artists" ? "Artists" : "Albums";
 
@@ -255,6 +258,7 @@ export function showDetailView(title, meta, tracks) {
   $.statsView.style.display = "none";
   $.main.style.display = "";
   $.backBtn.style.display = "block";
+  $.exportBtn.classList.remove("visible");
   $.colHeader.style.display = "";
   $.trackFilter.placeholder = "filter tracks...";
   $.dedupLabel.style.display = "flex";
@@ -483,6 +487,36 @@ $.hideLocalToggle.addEventListener("change", () => {
       selectPlaylist(state.activeId);
     }
   }
+});
+
+// ── CSV Export ──
+function csvEscape(val) {
+  if (!val) return "";
+  const s = String(val);
+  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+$.exportBtn.addEventListener("click", () => {
+  const tracks = state.currentTracks;
+  if (!tracks || tracks.length === 0) return;
+
+  const rows = [["Track Name", "Artist", "Album", "Spotify URI"].join(",")];
+  for (const t of tracks) {
+    rows.push(
+      [csvEscape(t.name), csvEscape(t.artist), csvEscape(t.album), csvEscape(t.uri || "")].join(","),
+    );
+  }
+
+  const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = ($.mainTitle.textContent || "export") + ".csv";
+  a.click();
+  URL.revokeObjectURL(url);
 });
 
 // ── Init ──
