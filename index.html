@@ -3,14 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Library</title>
+    <title>Spotify Data Viewer — Browse Your Exported Spotify Library</title>
+    <meta name="description" content="Free Spotify data viewer and export explorer. Browse playlists, search streaming history, and filter tracks, artists, and albums from your Spotify data export — entirely in your browser. No sign-up, no server — your data never leaves your device." />
+    <link rel="canonical" href="https://danielhdzzz.github.io/spotify-data-view/" />
+    <meta name="theme-color" content="#e96401" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Spotify Library Browser — Browse & Search Your Exported Spotify Data" />
+    <meta property="og:description" content="Upload your Spotify data export and instantly browse playlists, tracks, artists, and albums. Runs entirely in your browser — your data never leaves your device." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://danielhdzzz.github.io/spotify-data-view/" />
+    <meta property="og:site_name" content="Spotify Library Browser" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Spotify Library Browser — Browse & Search Your Exported Spotify Data" />
+    <meta name="twitter:description" content="Upload your Spotify data export and instantly browse playlists, tracks, artists, and albums. Runs entirely in your browser — your data never leaves your device." />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Spotify Data Viewer",
+      "url": "https://danielhdzzz.github.io/spotify-data-view/",
+      "description": "Free Spotify data viewer and export explorer. Browse playlists, search streaming history, and filter tracks from your Spotify data export.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "browserRequirements": "Requires a modern browser with JavaScript enabled"
+    }
+    </script>
+
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div id="loading">loading data...</div>
 
-    <div id="upload-screen">
-      <h1>Spotify Library Browser</h1>
+    <noscript><p style="padding:2rem;text-align:center;color:#ccc">JavaScript is required to use Spotify Library Browser.</p></noscript>
+
+    <main id="upload-screen">
+      <header>
+        <h1>Spotify Library Browser</h1>
+      </header>
       <p>
         Browse your exported Spotify data. Request yours from
         <a
@@ -21,7 +60,7 @@
         >
         then drop the files here.
       </p>
-      <div id="drop-zone">
+      <div id="drop-zone" aria-label="Drop zone — drag your Spotify data export files here or click to select">
         <span>drop folder or files here</span>
         <span class="hint">or click to select JSON files</span>
         <input
@@ -35,7 +74,7 @@
       <div id="upload-error"></div>
       <p>Your data never leaves your browser.</p>
       <a href="https://github.com/danielhdzzz/spotify-data-view" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:10px;color:var(--text-dim);text-decoration:none;margin-top:8px">github</a>
-    </div>
+    </main>
 
     <div id="sidebar" style="display: none">
       <div id="sidebar-header">

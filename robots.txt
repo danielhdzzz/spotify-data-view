@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://danielhdzzz.github.io/spotify-data-view/sitemap.xml
