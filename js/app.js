@@ -179,7 +179,62 @@ function showWrappedPage(id) {
   renderWrappedPage($.statsContent, wrappedYear, state.trackUriIndex);
 }
 
+export function showAllPlaylistTracks() {
+  state.activeId = "all-playlists";
+  state.isDetailView = false;
+  state.catalogMode = null;
+  state.navHistory = [];
+  $.backBtn.style.display = "none";
+  $.statsView.style.display = "none";
+  $.main.style.display = "";
+
+  document.querySelectorAll(".sidebar-item").forEach((el) => el.classList.remove("active"));
+
+  $.trackFilterWrap.style.display = "";
+  $.colHeader.style.display = "";
+  $.trackFilter.placeholder = "search all playlists...";
+  $.trackFilter.value = "";
+  $.dedupLabel.style.display = "flex";
+  $.dedupToggle.checked = true;
+  $.exportCsvBtn.classList.add("visible");
+  $.exportTxtBtn.classList.add("visible");
+
+  const allTracks = [];
+  for (const pl of state.playlists) {
+    for (const t of filterLocalTracks(pl.tracks)) {
+      allTracks.push(t);
+    }
+  }
+
+  state.currentTracks = allTracks;
+  $.mainTitle.textContent = "All Tracks";
+  state.sortCol = null;
+  state.sortAsc = true;
+  updateSortHeaders();
+
+  // Trigger filter pipeline (applies dedup since toggle is checked)
+  $.dedupToggle.dispatchEvent(new Event("change"));
+}
+
+export function updateMainMeta() {
+  if (state.activeId !== "all-playlists") return;
+  const n = state.playlists.length;
+  if ($.dedupToggle.checked) {
+    const seen = new Set();
+    for (const t of state.currentTracks) {
+      seen.add(t.uri || (t.name + "|||" + t.artist).toLowerCase());
+    }
+    $.mainMeta.textContent = seen.size.toLocaleString() + " unique tracks across " + n + " playlists";
+  } else {
+    $.mainMeta.textContent = state.currentTracks.length.toLocaleString() + " tracks across " + n + " playlists";
+  }
+}
+
 export function showPlaylist(id) {
+  if (id === "all-playlists") {
+    showAllPlaylistTracks();
+    return;
+  }
   state.activeId = id;
   state.isDetailView = false;
   state.catalogMode = null;
@@ -502,22 +557,7 @@ $.hideLocalToggle.addEventListener("change", () => {
 
 // ── Library title (reset to home) ──
 document.getElementById("library-title").addEventListener("click", () => {
-  state.activeId = null;
-  state.isDetailView = false;
-  state.catalogMode = null;
-  state.navHistory = [];
-  $.statsView.style.display = "none";
-  $.main.style.display = "";
-  $.backBtn.style.display = "none";
-  $.exportCsvBtn.classList.remove("visible");
-  $.exportTxtBtn.classList.remove("visible");
-  $.colHeader.style.display = "none";
-  $.trackFilterWrap.style.display = "none";
-  $.viewport.style.display = "none";
-  $.emptyState.style.display = "none";
-  $.mainTitle.textContent = "Select a playlist";
-  $.mainMeta.textContent = "";
-  document.querySelectorAll(".sidebar-item").forEach((el) => el.classList.remove("active"));
+  showAllPlaylistTracks();
 });
 
 // ── CSV Export ──

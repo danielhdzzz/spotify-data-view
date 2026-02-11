@@ -1,4 +1,4 @@
-import { ROW_H, RENDER_BUFFER, state, $, selectPlaylist, showArtist, showAlbum, toggleStatsMenu, toggleWrappedMenu } from "./app.js";
+import { ROW_H, RENDER_BUFFER, state, $, selectPlaylist, showArtist, showAlbum, toggleStatsMenu, toggleWrappedMenu, updateMainMeta } from "./app.js";
 import { getSettings } from "./settings.js";
 
 // ── Sidebar ──
@@ -200,6 +200,7 @@ function refilter() {
   applyDedup();
   applySort();
   renderTrackList();
+  updateMainMeta();
 }
 
 // ── Deduplication ──

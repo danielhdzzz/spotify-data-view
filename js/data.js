@@ -1,4 +1,4 @@
-import { state, $ } from "./app.js";
+import { state, $, showAllPlaylistTracks } from "./app.js";
 import { renderSidebar } from "./render.js";
 import { getSettings } from "./settings.js";
 import { cacheData, getCachedData } from "./cache.js";
@@ -89,6 +89,7 @@ function processData(libData, playlistFiles, wrappedFiles = []) {
   $.statsBar.style.display = "";
 
   renderSidebar("");
+  showAllPlaylistTracks();
   cacheData(libData, playlistFiles, wrappedFiles);
 }
 
