@@ -44,12 +44,12 @@ export function computeStats(state) {
     uniqueAlbums: albums.length,
     localTracks: localCount,
     localPct: uniqueCount ? ((localCount / uniqueCount) * 100).toFixed(1) : "0",
-    topArtists: artists.slice(0, 20),
-    topAlbums: albums.slice(0, 20),
+    allArtists: artists,
+    allAlbums: albums,
   };
 }
 
-export function renderStats(container, stats, callbacks) {
+export function renderStatsPage(container, stats, page, callbacks) {
   container.innerHTML = "";
 
   // Summary cards
@@ -65,37 +65,39 @@ export function renderStats(container, stats, callbacks) {
 
   container.appendChild(cards);
 
-  // Top Artists
-  container.appendChild(makeSection("Top Artists"));
-  const artistMax = stats.topArtists.length ? stats.topArtists[0].count : 1;
-  const artistList = document.createElement("div");
-  artistList.className = "stats-list";
-  stats.topArtists.forEach((a, i) => {
-    const row = makeRow(i + 1, a.name, a.count + " tracks", a.count / artistMax, () => {
-      callbacks.onArtist(a.name);
+  if (page === "artists") {
+    container.appendChild(makeSection("Top Artists"));
+    const items = stats.allArtists;
+    const max = items.length ? items[0].count : 1;
+    const list = document.createElement("div");
+    list.className = "stats-list";
+    items.forEach((a, i) => {
+      const row = makeRow(i + 1, a.name, a.count + " tracks", a.count / max, () => {
+        callbacks.onArtist(a.name);
+      });
+      list.appendChild(row);
     });
-    artistList.appendChild(row);
-  });
-  container.appendChild(artistList);
-
-  // Top Albums
-  container.appendChild(makeSection("Top Albums"));
-  const albumMax = stats.topAlbums.length ? stats.topAlbums[0].count : 1;
-  const albumList = document.createElement("div");
-  albumList.className = "stats-list";
-  stats.topAlbums.forEach((a, i) => {
-    const row = makeRow(
-      i + 1,
-      a.name + " \u2014 " + a.artist,
-      a.count + " tracks",
-      a.count / albumMax,
-      () => {
-        callbacks.onAlbum(a.name, a.artist);
-      }
-    );
-    albumList.appendChild(row);
-  });
-  container.appendChild(albumList);
+    container.appendChild(list);
+  } else {
+    container.appendChild(makeSection("Top Albums"));
+    const items = stats.allAlbums;
+    const max = items.length ? items[0].count : 1;
+    const list = document.createElement("div");
+    list.className = "stats-list";
+    items.forEach((a, i) => {
+      const row = makeRow(
+        i + 1,
+        a.artist + " \u2014 " + a.name,
+        a.count + " tracks",
+        a.count / max,
+        () => {
+          callbacks.onAlbum(a.name, a.artist);
+        }
+      );
+      list.appendChild(row);
+    });
+    container.appendChild(list);
+  }
 }
 
 function makeCard(label, value) {

@@ -1,6 +1,6 @@
 import { initData, tryLocalData } from "./data.js";
 import { initRender, renderSidebar, renderTrackList, renderCatalogList, renderVisibleRows, renderVisibleCatalogRows, updateSortHeaders } from "./render.js";
-import { computeStats, renderStats } from "./stats.js";
+import { computeStats, renderStatsPage } from "./stats.js";
 
 // ── Constants ──
 export const ROW_H = 34;
@@ -25,6 +25,7 @@ export const state = {
   navHistory: [],
   lastScrollTop: -1,
   visibleRows: [],
+  statsOpen: false,
 };
 
 // ── DOM refs ──
@@ -52,39 +53,52 @@ export const $ = {
   uploadError: document.getElementById("upload-error"),
   statsView: document.getElementById("stats-view"),
   statsContent: document.getElementById("stats-content"),
+  statsTitle: document.getElementById("stats-title"),
+  statsMeta: document.getElementById("stats-meta"),
 };
 
 // ── Navigation ──
 export function selectPlaylist(id) {
   state.navHistory = [];
-  if (id === "stats") {
-    showStats();
+  if (id.startsWith("stats-")) {
+    showStatsPage(id);
     return;
   }
   showPlaylist(id);
 }
 
+export function toggleStatsMenu() {
+  state.statsOpen = !state.statsOpen;
+}
+
 let cachedStats = null;
 
-function showStats() {
-  state.activeId = "stats";
+function showStatsPage(id) {
+  state.activeId = id;
   state.isDetailView = false;
   state.catalogMode = null;
   $.main.style.display = "none";
   $.statsView.style.display = "flex";
 
+  // ensure menu is open when navigating to a sub-page
+  state.statsOpen = true;
+
   document.querySelectorAll(".sidebar-item").forEach((el) => {
-    el.classList.toggle("active", el.dataset.id === "stats");
+    el.classList.toggle("active", el.dataset.id === id);
   });
 
   if (!cachedStats) cachedStats = computeStats(state);
-  renderStats($.statsContent, cachedStats, {
+
+  const page = id === "stats-albums" ? "albums" : "artists";
+  $.statsTitle.textContent = page === "albums" ? "Top Albums" : "Top Artists";
+  $.statsMeta.textContent = (page === "albums" ? cachedStats.uniqueAlbums : cachedStats.uniqueArtists).toLocaleString() + " unique " + page + " (deduplicated)";
+  renderStatsPage($.statsContent, cachedStats, page, {
     onArtist(name) {
-      state.navHistory.push({ type: "stats" });
+      state.navHistory.push({ type: "stats", page: id });
       showArtist(name);
     },
     onAlbum(name, artist) {
-      state.navHistory.push({ type: "stats" });
+      state.navHistory.push({ type: "stats", page: id });
       showAlbum(name, artist);
     },
   });
@@ -271,7 +285,7 @@ $.backBtn.addEventListener("click", () => {
   const prev = state.navHistory.pop();
   if (!prev) return;
   if (prev.type === "stats") {
-    showStats();
+    showStatsPage(prev.page);
     return;
   }
   if (prev.type === "catalog") {

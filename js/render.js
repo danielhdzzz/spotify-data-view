@@ -1,4 +1,4 @@
-import { ROW_H, RENDER_BUFFER, state, $, selectPlaylist, showArtist, showAlbum } from "./app.js";
+import { ROW_H, RENDER_BUFFER, state, $, selectPlaylist, showArtist, showAlbum, toggleStatsMenu } from "./app.js";
 
 // ── Sidebar ──
 export function renderSidebar(filter) {
@@ -27,8 +27,51 @@ export function renderSidebar(filter) {
     );
   }
 
-  if (!q || "stats".includes(q)) {
-    frag.appendChild(makeSidebarItem("stats", "Stats", "", ""));
+  const statsMatches = !q || "stats top artists albums".includes(q);
+  if (statsMatches) {
+    const statsGroup = document.createElement("div");
+    statsGroup.className = "sidebar-group" + (state.statsOpen ? " open" : "");
+
+    const toggle = document.createElement("div");
+    toggle.className = "sidebar-item sidebar-group-toggle";
+    toggle.dataset.id = "stats";
+    const toggleName = document.createElement("span");
+    toggleName.className = "sidebar-item-name";
+    toggleName.textContent = "Stats";
+    const arrow = document.createElement("span");
+    arrow.className = "sidebar-group-arrow";
+    arrow.textContent = "\u25B8";
+    toggle.appendChild(toggleName);
+    toggle.appendChild(arrow);
+    toggle.addEventListener("click", () => {
+      toggleStatsMenu();
+      statsGroup.classList.toggle("open", state.statsOpen);
+    });
+
+    const sub = document.createElement("div");
+    sub.className = "sidebar-group-items";
+
+    const subItems = [
+      { id: "stats-artists", label: "Top Artists" },
+      { id: "stats-albums", label: "Top Albums" },
+    ];
+    for (const s of subItems) {
+      if (q && !s.label.toLowerCase().includes(q) && !"stats".includes(q)) continue;
+      const item = document.createElement("div");
+      item.className = "sidebar-item sidebar-sub-item";
+      item.dataset.id = s.id;
+      if (s.id === state.activeId) item.classList.add("active");
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "sidebar-item-name";
+      nameSpan.textContent = s.label;
+      item.appendChild(nameSpan);
+      item.addEventListener("click", () => selectPlaylist(s.id));
+      sub.appendChild(item);
+    }
+
+    statsGroup.appendChild(toggle);
+    statsGroup.appendChild(sub);
+    frag.appendChild(statsGroup);
   }
 
   const sectionEl = document.createElement("div");

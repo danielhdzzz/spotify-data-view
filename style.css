@@ -131,6 +131,39 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Sidebar collapsible group ── */
+.sidebar-group-toggle {
+  user-select: none;
+}
+
+.sidebar-group-arrow {
+  font-size: 10px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.sidebar-group.open .sidebar-group-arrow {
+  transform: rotate(90deg);
+}
+
+.sidebar-group-items {
+  display: none;
+}
+
+.sidebar-group.open .sidebar-group-items {
+  display: block;
+}
+
+.sidebar-sub-item {
+  padding-left: 28px !important;
+  font-size: 12px;
+}
+
+.sidebar-sub-item.active {
+  padding-left: 26px !important;
+}
+
 .sidebar-section {
   padding: 10px 14px 4px;
   font-family: var(--mono);
