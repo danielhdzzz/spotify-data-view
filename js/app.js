@@ -650,6 +650,11 @@ function exportAllTxt() {
 document.querySelectorAll(".export-all-csv-btn").forEach((btn) => btn.addEventListener("click", exportAllCsv));
 document.querySelectorAll(".export-all-txt-btn").forEach((btn) => btn.addEventListener("click", exportAllTxt));
 
+// ── Mobile overlay ──
+document.getElementById("mobile-dismiss").addEventListener("click", () => {
+  document.getElementById("mobile-overlay").classList.add("dismissed");
+});
+
 // ── Init ──
 initRender();
 initData();
