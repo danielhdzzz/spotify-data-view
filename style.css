@@ -500,6 +500,12 @@ body {
   color: var(--text-dim);
 }
 
+/* ── Responsive column hiding ── */
+@media (max-width: 1200px) { .col-source { display: none !important; } }
+@media (max-width: 1000px) { .col-date   { display: none !important; } }
+@media (max-width: 850px)  { .col-album  { display: none !important; } }
+@media (max-width: 700px)  { .col-num    { display: none !important; } }
+
 /* ── Empty state ── */
 #empty-state {
   display: flex;
