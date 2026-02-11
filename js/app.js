@@ -58,8 +58,8 @@ export const $ = {
   statsMeta: document.getElementById("stats-meta"),
   settingsBtn: document.getElementById("settings-btn"),
   settingsOverlay: document.getElementById("settings-overlay"),
-  settingsClose: document.getElementById("settings-close"),
   hideLocalToggle: document.getElementById("hide-local-toggle"),
+  privacyOverlay: document.getElementById("privacy-overlay"),
 };
 
 // ── Navigation ──
@@ -337,8 +337,9 @@ document.addEventListener("keydown", (e) => {
     $.trackFilter.select();
   }
   if (e.key === "Escape") {
-    if ($.settingsOverlay.style.display !== "none") {
-      $.settingsOverlay.style.display = "none";
+    const open = [$.settingsOverlay, $.privacyOverlay].find((o) => o.style.display !== "none");
+    if (open) {
+      open.style.display = "none";
     } else if (document.activeElement === $.sidebarSearch) {
       $.sidebarSearch.value = "";
       $.sidebarSearch.blur();
@@ -365,6 +366,19 @@ $.sidebarSearch.addEventListener("input", () => {
   renderSidebar($.sidebarSearch.value);
 });
 
+// ── Overlays ──
+function wireOverlay(overlay) {
+  overlay.querySelector(".overlay-close").addEventListener("click", () => {
+    overlay.style.display = "none";
+  });
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.style.display = "none";
+  });
+}
+
+wireOverlay($.settingsOverlay);
+wireOverlay($.privacyOverlay);
+
 // ── Settings ──
 loadSettings();
 $.hideLocalToggle.checked = getSettings().hideLocalTracks;
@@ -373,12 +387,10 @@ $.settingsBtn.addEventListener("click", () => {
   $.settingsOverlay.style.display = "";
 });
 
-$.settingsClose.addEventListener("click", () => {
-  $.settingsOverlay.style.display = "none";
-});
-
-$.settingsOverlay.addEventListener("click", (e) => {
-  if (e.target === $.settingsOverlay) $.settingsOverlay.style.display = "none";
+document.querySelectorAll(".privacy-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    $.privacyOverlay.style.display = "";
+  });
 });
 
 $.hideLocalToggle.addEventListener("change", () => {
