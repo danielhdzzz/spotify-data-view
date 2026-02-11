@@ -192,6 +192,7 @@ export function showAllPlaylistTracks() {
 
   $.trackFilterWrap.style.display = "";
   $.colHeader.style.display = "";
+  $.colHeader.querySelector(".col-source").textContent = "Source";
   $.trackFilter.placeholder = "search all tracks...";
   $.trackFilter.value = "";
   $.dedupLabel.style.display = "flex";
@@ -199,10 +200,11 @@ export function showAllPlaylistTracks() {
   $.exportCsvBtn.classList.add("visible");
   $.exportTxtBtn.classList.add("visible");
 
-  const allTracks = filterLocalTracks(normalizeLibraryTracks(state.library.tracks));
+  const allTracks = filterLocalTracks(normalizeLibraryTracks(state.library.tracks))
+    .map((t) => ({ ...t, source: "Liked Songs" }));
   for (const pl of state.playlists) {
     for (const t of filterLocalTracks(pl.tracks)) {
-      allTracks.push(t);
+      allTracks.push({ ...t, source: pl.name });
     }
   }
 
@@ -325,6 +327,7 @@ export function showDetailView(title, meta, tracks) {
 
   $.trackFilterWrap.style.display = "";
   $.colHeader.style.display = "";
+  $.colHeader.querySelector(".col-source").textContent = "Source";
   $.trackFilter.placeholder = "filter tracks...";
   $.dedupLabel.style.display = "flex";
   $.dedupToggle.checked = false;

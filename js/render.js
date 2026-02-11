@@ -281,9 +281,8 @@ export function renderTrackList() {
 
   const hasDate = state.filteredTracks.some((t) => t.date);
   $.colHeader.querySelector(".col-date").style.display = hasDate ? "" : "none";
-  $.colHeader.querySelector(".col-source").style.display = state.isDetailView
-    ? ""
-    : "none";
+  const showSource = state.isDetailView || state.activeId === "all-playlists";
+  $.colHeader.querySelector(".col-source").style.display = showSource ? "" : "none";
 
   $.runway.style.height = total * ROW_H + "px";
 
@@ -322,6 +321,7 @@ export function renderVisibleRows() {
   });
 
   const hasDate = state.filteredTracks.some((t) => t.date);
+  const showSource = state.isDetailView || state.activeId === "all-playlists";
 
   for (const idx of needed) {
     const t = state.filteredTracks[idx];
@@ -375,7 +375,7 @@ export function renderVisibleRows() {
     const sourceSpan = document.createElement("span");
     sourceSpan.className = "col-source";
     sourceSpan.textContent = t.source || "";
-    sourceSpan.style.display = state.isDetailView ? "" : "none";
+    sourceSpan.style.display = showSource ? "" : "none";
 
     const dateSpan = document.createElement("span");
     dateSpan.className = "col-date";
