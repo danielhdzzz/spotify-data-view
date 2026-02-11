@@ -38,12 +38,19 @@ export function computeStats(state) {
   const albums = Array.from(albumMap.values())
     .sort((a, b) => b.count - a.count);
 
+  const totalTracks = state.library.tracks.length +
+    state.playlists.reduce((s, p) => s + p.trackCount, 0);
+
   return {
     uniqueTracks: uniqueCount,
     uniqueArtists: artists.length,
     uniqueAlbums: albums.length,
     localTracks: localCount,
     localPct: uniqueCount ? ((localCount / uniqueCount) * 100).toFixed(1) : "0",
+    totalTracks: totalTracks,
+    likedSongs: state.library.tracks.length,
+    playlistCount: state.playlists.length,
+    duplicates: totalTracks - uniqueCount,
     allArtists: artists,
     allAlbums: albums,
   };
@@ -52,18 +59,10 @@ export function computeStats(state) {
 export function renderStatsPage(container, stats, page, callbacks) {
   container.innerHTML = "";
 
-  // Summary cards
-  const cards = document.createElement("div");
-  cards.className = "stats-cards";
-
-  cards.appendChild(makeCard("Unique Tracks", stats.uniqueTracks.toLocaleString()));
-  cards.appendChild(makeCard("Artists", stats.uniqueArtists.toLocaleString()));
-  cards.appendChild(makeCard("Albums", stats.uniqueAlbums.toLocaleString()));
-  cards.appendChild(
-    makeCard("Local Tracks", stats.localTracks.toLocaleString() + " (" + stats.localPct + "%)")
-  );
-
-  container.appendChild(cards);
+  if (page === "overview") {
+    renderOverview(container, stats);
+    return;
+  }
 
   if (page === "artists") {
     container.appendChild(makeSection("Top Artists"));
@@ -98,6 +97,39 @@ export function renderStatsPage(container, stats, page, callbacks) {
     });
     container.appendChild(list);
   }
+}
+
+function renderOverview(container, stats) {
+  // Primary counts
+  const primary = document.createElement("div");
+  primary.className = "stats-cards";
+  primary.appendChild(makeCard("Unique Tracks", stats.uniqueTracks.toLocaleString()));
+  primary.appendChild(makeCard("Unique Artists", stats.uniqueArtists.toLocaleString()));
+  primary.appendChild(makeCard("Unique Albums", stats.uniqueAlbums.toLocaleString()));
+  container.appendChild(primary);
+
+  // Library breakdown
+  container.appendChild(makeSection("Library"));
+  const breakdown = document.createElement("div");
+  breakdown.className = "stats-cards";
+  breakdown.appendChild(makeCard("Liked Songs", stats.likedSongs.toLocaleString()));
+  breakdown.appendChild(makeCard("Playlists", stats.playlistCount.toLocaleString()));
+  breakdown.appendChild(makeCard("Total Tracks", stats.totalTracks.toLocaleString()));
+  breakdown.appendChild(makeCard("Cross-Playlist Duplicates", stats.duplicates.toLocaleString()));
+  container.appendChild(breakdown);
+
+  // Extra detail
+  container.appendChild(makeSection("Averages"));
+  const avgs = document.createElement("div");
+  avgs.className = "stats-cards";
+  const avgPerArtist = stats.uniqueArtists ? (stats.uniqueTracks / stats.uniqueArtists).toFixed(1) : "0";
+  const avgPerAlbum = stats.uniqueAlbums ? (stats.uniqueTracks / stats.uniqueAlbums).toFixed(1) : "0";
+  const avgPerPlaylist = stats.playlistCount ? (stats.totalTracks / stats.playlistCount).toFixed(0) : "0";
+  avgs.appendChild(makeCard("Tracks / Artist", avgPerArtist));
+  avgs.appendChild(makeCard("Tracks / Album", avgPerAlbum));
+  avgs.appendChild(makeCard("Tracks / Playlist", avgPerPlaylist));
+  avgs.appendChild(makeCard("Local Tracks", stats.localTracks.toLocaleString() + " (" + stats.localPct + "%)"));
+  container.appendChild(avgs);
 }
 
 function makeCard(label, value) {

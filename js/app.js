@@ -89,9 +89,16 @@ function showStatsPage(id) {
 
   if (!cachedStats) cachedStats = computeStats(state);
 
-  const page = id === "stats-albums" ? "albums" : "artists";
-  $.statsTitle.textContent = page === "albums" ? "Top Albums" : "Top Artists";
-  $.statsMeta.textContent = (page === "albums" ? cachedStats.uniqueAlbums : cachedStats.uniqueArtists).toLocaleString() + " unique " + page + " (deduplicated)";
+  const pageMap = { "stats-albums": "albums", "stats-artists": "artists", "stats-overview": "overview" };
+  const page = pageMap[id] || "overview";
+  const titles = { overview: "Overview", artists: "Top Artists", albums: "Top Albums" };
+  const metas = {
+    overview: cachedStats.uniqueTracks.toLocaleString() + " unique tracks (deduplicated)",
+    artists: cachedStats.uniqueArtists.toLocaleString() + " unique artists (deduplicated)",
+    albums: cachedStats.uniqueAlbums.toLocaleString() + " unique albums (deduplicated)",
+  };
+  $.statsTitle.textContent = titles[page];
+  $.statsMeta.textContent = metas[page];
   renderStatsPage($.statsContent, cachedStats, page, {
     onArtist(name) {
       state.navHistory.push({ type: "stats", page: id });

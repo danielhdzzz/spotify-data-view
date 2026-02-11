@@ -27,7 +27,7 @@ export function renderSidebar(filter) {
     );
   }
 
-  const statsMatches = !q || "stats top artists albums".includes(q);
+  const statsMatches = !q || "stats overview top artists albums".includes(q);
   if (statsMatches) {
     const statsGroup = document.createElement("div");
     statsGroup.className = "sidebar-group" + (state.statsOpen ? " open" : "");
@@ -52,6 +52,7 @@ export function renderSidebar(filter) {
     sub.className = "sidebar-group-items";
 
     const subItems = [
+      { id: "stats-overview", label: "Overview" },
       { id: "stats-artists", label: "Top Artists" },
       { id: "stats-albums", label: "Top Albums" },
     ];
