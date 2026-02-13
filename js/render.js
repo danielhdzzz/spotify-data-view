@@ -1,5 +1,6 @@
 import { ROW_H, RENDER_BUFFER, state, $, selectPlaylist, showArtist, showAlbum, toggleStatsMenu, toggleWrappedMenu, updateMainMeta } from "./app.js";
 import { getSettings } from "./settings.js";
+import { openPlayer } from "./player.js";
 
 // ── Sidebar ──
 export function renderSidebar(filter) {
@@ -382,6 +383,19 @@ export function renderVisibleRows() {
     dateSpan.textContent = t.date || "";
     dateSpan.style.display = hasDate ? "" : "none";
 
+    const playCell = document.createElement("span");
+    playCell.className = "col-play";
+    const playBtn = document.createElement("button");
+    playBtn.className = "play-btn";
+    playBtn.textContent = "\u25B6";
+    playBtn.title = "Play on YouTube";
+    playBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openPlayer(t);
+    });
+    playCell.appendChild(playBtn);
+
+    row.appendChild(playCell);
     row.appendChild(numSpan);
     row.appendChild(trackSpan);
     row.appendChild(artistSpan);

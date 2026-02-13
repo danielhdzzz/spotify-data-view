@@ -145,6 +145,7 @@
         >
       </div>
       <div id="col-header" style="display: none">
+        <span class="col-play"></span>
         <span class="col-num">#</span>
         <span class="col-track">Title</span>
         <span class="col-artist">Artist</span>
@@ -247,6 +248,21 @@
           <button id="export-confirm-btn" class="overlay-action-btn">
             Download
           </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="player-overlay" class="overlay" style="display: none">
+      <div class="overlay-panel player-panel">
+        <div class="overlay-header">
+          <span id="player-title">Playing</span>
+          <button class="overlay-close">&times;</button>
+        </div>
+        <div class="overlay-body">
+          <div id="player-embed"></div>
+          <div id="player-loading">Searching YouTube...</div>
+          <div id="player-error" style="display: none"></div>
+          <div id="player-results"></div>
         </div>
       </div>
     </div>

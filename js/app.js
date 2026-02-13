@@ -4,6 +4,7 @@ import { computeStats, renderStatsPage } from "./stats.js";
 import { renderWrappedPage } from "./wrapped.js";
 import { loadSettings, saveSettings, getSettings } from "./settings.js";
 import { clearCachedData } from "./cache.js";
+import { closePlayer } from "./player.js";
 
 // ── Constants ──
 export const ROW_H = 34;
@@ -71,6 +72,7 @@ export const $ = {
   exportOverlay: document.getElementById("export-overlay"),
   exportColumns: document.getElementById("export-columns"),
   exportConfirmBtn: document.getElementById("export-confirm-btn"),
+  playerOverlay: document.getElementById("player-overlay"),
 };
 
 // ── Theme ──
@@ -467,6 +469,11 @@ document.addEventListener("keydown", (e) => {
     $.trackFilter.select();
   }
   if (e.key === "Escape") {
+    if ($.playerOverlay.style.display !== "none") {
+      $.playerOverlay.style.display = "none";
+      closePlayer();
+      return;
+    }
     const open = [$.settingsOverlay, $.privacyOverlay, $.exportOverlay].find((o) => o.style.display !== "none");
     if (open) {
       open.style.display = "none";
@@ -497,18 +504,21 @@ $.sidebarSearch.addEventListener("input", () => {
 });
 
 // ── Overlays ──
-function wireOverlay(overlay) {
-  overlay.querySelector(".overlay-close").addEventListener("click", () => {
+function wireOverlay(overlay, onClose) {
+  const hide = () => {
     overlay.style.display = "none";
-  });
+    if (onClose) onClose();
+  };
+  overlay.querySelector(".overlay-close").addEventListener("click", hide);
   overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) overlay.style.display = "none";
+    if (e.target === overlay) hide();
   });
 }
 
 wireOverlay($.settingsOverlay);
 wireOverlay($.privacyOverlay);
 wireOverlay($.exportOverlay);
+wireOverlay($.playerOverlay, () => closePlayer());
 
 // ── Settings ──
 loadSettings();
