@@ -530,6 +530,15 @@ export function applyAlbumArt() {
   TRACK_ROW_H = on ? 64 : 32;
   $.viewToggle.textContent = on ? "\u25A1" : "\u2630";
   $.albumArtToggle.checked = on;
+  // Keep header spacer in sync
+  const existing = $.colHeader.querySelector(".col-art");
+  if (on && !existing) {
+    const spacer = document.createElement("span");
+    spacer.className = "col-art";
+    $.colHeader.insertBefore(spacer, $.colHeader.firstChild);
+  } else if (!on && existing) {
+    existing.remove();
+  }
   if (state.library) {
     if (state.catalogMode) renderCatalogList();
     else if (state.filteredTracks.length) renderTrackList();
