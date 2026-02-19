@@ -76,6 +76,7 @@ export const $ = {
   playerOverlay: document.getElementById("player-overlay"),
   albumArtToggle: document.getElementById("album-art-toggle"),
   viewToggle: document.getElementById("view-toggle"),
+  linkSpotifyToggle: document.getElementById("link-spotify-toggle"),
 };
 
 // ── Theme ──
@@ -539,6 +540,7 @@ export function applyAlbumArt() {
 loadSettings();
 $.hideLocalToggle.checked = getSettings().hideLocalTracks;
 $.albumArtToggle.checked = getSettings().showAlbumArt;
+$.linkSpotifyToggle.checked = getSettings().linkToSpotify;
 
 // Theme radios
 const themeRadios = document.querySelectorAll('input[name="theme"]');
@@ -573,6 +575,16 @@ $.albumArtToggle.addEventListener("change", () => {
   s.showAlbumArt = $.albumArtToggle.checked;
   saveSettings(s);
   applyAlbumArt();
+});
+
+$.linkSpotifyToggle.addEventListener("change", () => {
+  const s = getSettings();
+  s.linkToSpotify = $.linkSpotifyToggle.checked;
+  saveSettings(s);
+  if (state.library) {
+    if (state.catalogMode) renderCatalogList();
+    else if (state.filteredTracks.length) renderTrackList();
+  }
 });
 
 $.viewToggle.addEventListener("click", () => {

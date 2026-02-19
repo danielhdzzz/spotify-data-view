@@ -450,6 +450,7 @@ body {
   align-items: center;
   justify-content: center;
   margin-right: 8px;
+  background: var(--border);
 }
 .col-art img {
   width: 48px;

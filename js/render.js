@@ -340,7 +340,7 @@ export function renderVisibleRows() {
     const trackSpan = document.createElement("span");
     trackSpan.className = "col-track";
 
-    if (t.uri && !t.local) {
+    if (t.uri && !t.local && getSettings().linkToSpotify) {
       const a = document.createElement("a");
       const trackId = t.uri.split(":").pop();
       const type = t.isAlbum ? "album" : "track";
