@@ -1,6 +1,7 @@
-import { ROW_H, RENDER_BUFFER, state, $, selectPlaylist, showArtist, showAlbum, toggleStatsMenu, toggleWrappedMenu, updateMainMeta } from "./app.js";
+import { ROW_H, TRACK_ROW_H, RENDER_BUFFER, state, $, selectPlaylist, showArtist, showAlbum, toggleStatsMenu, toggleWrappedMenu, updateMainMeta } from "./app.js";
 import { getSettings } from "./settings.js";
 import { openPlayer } from "./player.js";
+import { getAlbumArt } from "./albumart.js";
 
 // ── Sidebar ──
 export function renderSidebar(filter) {
@@ -285,7 +286,7 @@ export function renderTrackList() {
   const showSource = state.isDetailView || state.activeId === "all-playlists";
   $.colHeader.querySelector(".col-source").style.display = showSource ? "" : "none";
 
-  $.runway.style.height = total * ROW_H + "px";
+  $.runway.style.height = total * TRACK_ROW_H + "px";
 
   state.visibleRows.forEach((r) => r.el.remove());
   state.visibleRows = [];
@@ -302,11 +303,11 @@ export function renderVisibleRows() {
 
   const startIdx = Math.max(
     0,
-    Math.floor(scrollTop / ROW_H) - RENDER_BUFFER,
+    Math.floor(scrollTop / TRACK_ROW_H) - RENDER_BUFFER,
   );
   const endIdx = Math.min(
     total,
-    Math.ceil((scrollTop + viewH) / ROW_H) + RENDER_BUFFER,
+    Math.ceil((scrollTop + viewH) / TRACK_ROW_H) + RENDER_BUFFER,
   );
 
   const needed = new Set();
@@ -323,12 +324,14 @@ export function renderVisibleRows() {
 
   const hasDate = state.filteredTracks.some((t) => t.date);
   const showSource = state.isDetailView || state.activeId === "all-playlists";
+  const showArt = getSettings().showAlbumArt;
 
   for (const idx of needed) {
     const t = state.filteredTracks[idx];
     const row = document.createElement("div");
     row.className = "track-row";
-    row.style.top = idx * ROW_H + "px";
+    row.style.top = idx * TRACK_ROW_H + "px";
+    row.style.height = TRACK_ROW_H + "px";
 
     const numSpan = document.createElement("span");
     numSpan.className = "col-num";
@@ -394,6 +397,17 @@ export function renderVisibleRows() {
       openPlayer(t);
     });
     playCell.appendChild(playBtn);
+
+    if (showArt) {
+      const artCell = document.createElement("span");
+      artCell.className = "col-art";
+      const img = document.createElement("img");
+      img.alt = "";
+      const cachedUrl = getAlbumArt(t, (url) => { img.src = url; img.classList.add("loaded"); });
+      if (cachedUrl) { img.src = cachedUrl; img.classList.add("loaded"); }
+      artCell.appendChild(img);
+      row.appendChild(artCell);
+    }
 
     row.appendChild(playCell);
     row.appendChild(numSpan);

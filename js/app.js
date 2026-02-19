@@ -8,6 +8,7 @@ import { closePlayer } from "./player.js";
 
 // ── Constants ──
 export const ROW_H = 32;
+export let TRACK_ROW_H = 32;
 export const RENDER_BUFFER = 10;
 
 // ── Shared state ──
@@ -73,6 +74,8 @@ export const $ = {
   exportColumns: document.getElementById("export-columns"),
   exportConfirmBtn: document.getElementById("export-confirm-btn"),
   playerOverlay: document.getElementById("player-overlay"),
+  albumArtToggle: document.getElementById("album-art-toggle"),
+  viewToggle: document.getElementById("view-toggle"),
 };
 
 // ── Theme ──
@@ -520,9 +523,22 @@ wireOverlay($.privacyOverlay);
 wireOverlay($.exportOverlay);
 wireOverlay($.playerOverlay, () => closePlayer());
 
+// ── Album Art ──
+export function applyAlbumArt() {
+  const on = getSettings().showAlbumArt;
+  TRACK_ROW_H = on ? 64 : 32;
+  $.viewToggle.textContent = on ? "\u25A1" : "\u2630";
+  $.albumArtToggle.checked = on;
+  if (state.library) {
+    if (state.catalogMode) renderCatalogList();
+    else if (state.filteredTracks.length) renderTrackList();
+  }
+}
+
 // ── Settings ──
 loadSettings();
 $.hideLocalToggle.checked = getSettings().hideLocalTracks;
+$.albumArtToggle.checked = getSettings().showAlbumArt;
 
 // Theme radios
 const themeRadios = document.querySelectorAll('input[name="theme"]');
@@ -550,6 +566,20 @@ document.querySelectorAll(".privacy-btn").forEach((btn) => {
 $.clearCacheBtn.addEventListener("click", async () => {
   await clearCachedData();
   location.reload();
+});
+
+$.albumArtToggle.addEventListener("change", () => {
+  const s = getSettings();
+  s.showAlbumArt = $.albumArtToggle.checked;
+  saveSettings(s);
+  applyAlbumArt();
+});
+
+$.viewToggle.addEventListener("click", () => {
+  const s = getSettings();
+  s.showAlbumArt = !s.showAlbumArt;
+  saveSettings(s);
+  applyAlbumArt();
 });
 
 $.hideLocalToggle.addEventListener("change", () => {
@@ -771,6 +801,7 @@ document.getElementById("mobile-dismiss").addEventListener("click", () => {
 });
 
 // ── Init ──
+applyAlbumArt();
 initRender();
 initData();
 tryLocalData();
