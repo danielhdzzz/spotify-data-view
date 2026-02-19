@@ -7,7 +7,7 @@ import { clearCachedData } from "./cache.js";
 import { closePlayer } from "./player.js";
 
 // ── Constants ──
-export const ROW_H = 34;
+export const ROW_H = 32;
 export const RENDER_BUFFER = 10;
 
 // ── Shared state ──

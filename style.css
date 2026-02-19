@@ -7,6 +7,7 @@
 }
 
 :root {
+  --unit: 8px;
   --bg: #0a0a0a;
   --bg-raised: #111111;
   --bg-hover: #1a1a1a;
@@ -20,7 +21,7 @@
   --accent-dim: #a55518;
   --mono: "IBM Plex Mono", monospace;
   --sans: "IBM Plex Sans", sans-serif;
-  --row-h: 34px;
+  --row-h: 32px; /* 4 × unit */
 }
 
 html,
@@ -42,16 +43,36 @@ body {
 #sidebar {
   width: 280px;
   min-width: 280px;
-  height: calc(100vh - 29px);
+  height: calc(100vh - var(--row-h));
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   background: var(--bg);
 }
 
-#sidebar-header {
-  padding: 16px 14px 10px;
+.sidebar-brand {
+  padding: 0 calc(2 * var(--unit));
+  height: calc(2 * var(--row-h));
+  display: flex;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#sidebar-header {
+  height: calc(2 * var(--row-h));
+  padding: 0 calc(2 * var(--unit));
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--unit);
+  flex-shrink: 0;
 }
 
 #sidebar-header h1 {
@@ -61,7 +82,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-dim);
-  margin-bottom: 10px;
+  margin-bottom: 0;
   cursor: pointer;
 }
 
@@ -73,10 +94,11 @@ body {
   width: 100%;
   background: var(--bg-raised);
   border: 1px solid var(--border);
+  border-radius: 2px;
   color: var(--text);
   font-family: var(--mono);
   font-size: 12px;
-  padding: 7px 10px;
+  padding: calc(0.75 * var(--unit)) calc(1.5 * var(--unit));
   outline: none;
   transition: border-color 0.15s;
 }
@@ -98,20 +120,21 @@ body {
 .sidebar-item {
   display: flex;
   align-items: center;
-  padding: 8px 14px;
+  padding: 0 calc(2 * var(--unit));
+  height: var(--row-h);
   cursor: pointer;
   border-bottom: 1px solid var(--border);
   transition: background 0.1s;
-  gap: 8px;
+  gap: var(--unit);
 }
 
 .sidebar-item:hover {
   background: var(--bg-hover);
 }
 .sidebar-item.active {
-  background: var(--bg-active);
+  background: rgba(233, 100, 1, 0.06);
   border-left: 2px solid var(--accent);
-  padding-left: 12px;
+  padding-left: calc(2 * var(--unit) - 2px);
 }
 
 .sidebar-item-name {
@@ -161,16 +184,19 @@ body {
 }
 
 .sidebar-sub-item {
-  padding-left: 28px !important;
+  padding-left: calc(4 * var(--unit)) !important;
   font-size: 12px;
 }
 
 .sidebar-sub-item.active {
-  padding-left: 26px !important;
+  padding-left: calc(4 * var(--unit) - 2px) !important;
 }
 
 .sidebar-section {
-  padding: 10px 14px 4px;
+  padding: 0 calc(2 * var(--unit)) var(--unit);
+  height: calc(2 * var(--row-h));
+  display: flex;
+  align-items: flex-end;
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 500;
@@ -189,17 +215,19 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 29px);
+  height: calc(100vh - var(--row-h));
   min-width: 0;
 }
 
 #main-header {
-  padding: 16px 20px 10px;
+  height: calc(2 * var(--row-h));
+  padding: 0 calc(2 * var(--unit));
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: calc(1.5 * var(--unit));
   flex-shrink: 0;
+  padding-bottom: var(--unit);
 }
 
 #back-btn,
@@ -211,7 +239,7 @@ body {
   color: var(--text-dim);
   font-family: var(--mono);
   font-size: 12px;
-  padding: 3px 10px;
+  padding: calc(0.5 * var(--unit)) calc(1.5 * var(--unit));
   cursor: pointer;
   display: none;
   margin-bottom: 1px;
@@ -298,16 +326,17 @@ body {
   font-size: 11px;
   color: var(--text-dim);
   white-space: nowrap;
-  padding-bottom: 3px;
+  padding-bottom: 2px;
 }
 
 #track-filter-wrap {
-  padding: 8px 20px;
+  padding: 0 calc(2 * var(--unit));
+  height: var(--row-h);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: calc(2 * var(--unit));
 }
 
 #dedup-label {
@@ -336,10 +365,11 @@ body {
   max-width: 360px;
   background: var(--bg-raised);
   border: 1px solid var(--border);
+  border-radius: 2px;
   color: var(--text);
   font-family: var(--mono);
   font-size: 12px;
-  padding: 6px 10px;
+  padding: calc(0.5 * var(--unit)) calc(1.5 * var(--unit));
   outline: none;
   transition: border-color 0.15s;
 }
@@ -354,7 +384,9 @@ body {
 /* ── Column Header ── */
 #col-header {
   display: flex;
-  padding: 6px 20px;
+  padding: 0 calc(2 * var(--unit));
+  height: var(--row-h);
+  align-items: center;
   border-bottom: 1px solid var(--border);
   font-family: var(--mono);
   font-size: 10px;
@@ -368,7 +400,6 @@ body {
 }
 
 #col-header span {
-  padding: 2px 0;
   cursor: pointer;
 }
 #col-header span:hover {
@@ -442,7 +473,7 @@ body {
 .track-row {
   display: flex;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 calc(2 * var(--unit));
   height: var(--row-h);
   position: absolute;
   left: 0;
@@ -601,7 +632,21 @@ body {
   justify-content: center;
   height: 100vh;
   width: 100%;
-  gap: 20px;
+  gap: 24px;
+  position: relative;
+}
+
+#upload-screen header {
+  text-align: center;
+}
+
+#upload-screen header::after {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: var(--accent-dim);
+  margin: 16px auto 0;
 }
 
 #upload-screen h1 {
@@ -609,7 +654,6 @@ body {
   font-size: 24px;
   font-weight: 600;
   color: var(--text-bright);
-  text-align: center;
 }
 
 #upload-screen .subtitle {
@@ -634,9 +678,10 @@ body {
 }
 
 #drop-zone {
-  width: 400px;
-  height: 180px;
-  border: 2px dashed var(--border-light);
+  width: 440px;
+  height: 200px;
+  border: 1px dashed var(--border-light);
+  border-radius: 2px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -644,8 +689,9 @@ body {
   gap: 12px;
   cursor: pointer;
   transition:
-    border-color 0.15s,
-    background 0.15s;
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
   font-family: var(--mono);
   font-size: 12px;
   color: var(--text-dim);
@@ -655,6 +701,7 @@ body {
 #drop-zone.dragover {
   border-color: var(--accent);
   background: var(--bg-raised);
+  box-shadow: 0 0 40px rgba(233, 100, 1, 0.04), inset 0 0 40px rgba(233, 100, 1, 0.02);
 }
 
 #drop-zone .hint {
@@ -674,17 +721,19 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 29px);
+  height: calc(100vh - var(--row-h));
   min-width: 0;
 }
 
 #stats-header {
-  padding: 16px 20px 10px;
+  height: calc(2 * var(--row-h));
+  padding: 0 calc(2 * var(--unit));
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: calc(1.5 * var(--unit));
   flex-shrink: 0;
+  padding-bottom: var(--unit);
 }
 
 #stats-title {
@@ -698,13 +747,13 @@ body {
   font-family: var(--mono);
   font-size: 11px;
   color: var(--text-dim);
-  padding-bottom: 3px;
+  padding-bottom: 2px;
 }
 
 #stats-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: calc(2 * var(--unit));
   scrollbar-width: thin;
   scrollbar-color: var(--border-light) transparent;
 }
@@ -929,7 +978,8 @@ body {
 /* ── Stats bar ── */
 #stats-bar {
   width: 100%;
-  padding: 6px 14px;
+  padding: 0 calc(2 * var(--unit));
+  height: var(--row-h);
   font-family: var(--mono);
   font-size: 10px;
   color: var(--text-dim);
@@ -937,7 +987,7 @@ body {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  gap: 12px;
+  gap: calc(1.5 * var(--unit));
 }
 
 #stats-bar .stats-text {
@@ -1122,9 +1172,10 @@ body {
 
 /* ── Footer links (upload screen) ── */
 .footer-links {
+  position: absolute;
+  bottom: 24px;
   display: flex;
-  gap: 14px;
-  margin-top: 8px;
+  gap: 16px;
 }
 
 .footer-links a,
@@ -1312,6 +1363,41 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ── Brand ── */
+.brand-mark {
+  position: absolute;
+  top: 24px;
+  left: 28px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  animation: fadeIn 0.6s ease both;
+}
+
+/* ── Entrance animation ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#upload-screen > :not(.brand-mark):not(.footer-links):not(#upload-error) {
+  animation: fadeUp 0.4s ease both;
+}
+#upload-screen > :nth-child(3) { animation-delay: 0.04s; }
+#upload-screen > :nth-child(4) { animation-delay: 0.08s; }
+#upload-screen > :nth-child(6) { animation-delay: 0.12s; }
+
+#upload-screen .footer-links {
+  animation: fadeIn 0.5s ease 0.2s both;
 }
 
 /* ── Light theme ── */
