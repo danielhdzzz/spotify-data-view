@@ -1,6 +1,6 @@
-# Spotify Library Browser
+# unsub.stream
 
-A simple browser for your exported Spotify data. Zero dependencies, pure HTML/CSS/JS — nothing to install, nothing to build. All processing happens in your browser — your data never leaves your machine.
+Browse & explore your exported Spotify data. Zero dependencies, pure HTML/CSS/JS — nothing to install, nothing to build. All processing happens in your browser — your data never leaves your machine.
 
 ## Getting Your Data
 
@@ -11,7 +11,7 @@ A simple browser for your exported Spotify data. Zero dependencies, pure HTML/CS
 
 ## Usage
 
-Visit [the hosted site](https://danielhdzzz.github.io/spotify-data-view/) and drop your Spotify export folder (or the JSON files inside it) onto the upload area. You can also click to select files manually. Your data is processed entirely in the browser and is never sent anywhere.
+Visit [unsub.stream](https://unsub.stream) and drop your Spotify export folder (or the JSON files inside it) onto the upload area. You can also click to select files manually. Your data is processed entirely in the browser and is never sent anywhere.
 
 After the first upload, your data is cached locally in your browser (IndexedDB) so the app loads instantly on return visits — no need to re-upload. You can clear the cache from Settings.
 
