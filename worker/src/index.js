@@ -1,9 +1,11 @@
 const ALLOWED_ORIGINS = [
+  "https://unsub.stream",
   "https://danielhdzzz.github.io",
   "http://localhost:3000",
   "http://localhost:5500",
   "http://127.0.0.1:5500",
   "http://localhost:8080",
+  "http://localhost:8888",
 ];
 
 function corsHeaders(request) {
@@ -66,7 +68,11 @@ export default {
       const searchRes = await fetch(searchUrl.toString());
       if (!searchRes.ok) {
         const err = await searchRes.text();
-        return jsonResponse({ error: "YouTube search failed" }, searchRes.status, request);
+        return jsonResponse(
+          { error: "YouTube search failed" },
+          searchRes.status,
+          request,
+        );
       }
 
       const searchData = await searchRes.json();
@@ -93,7 +99,9 @@ export default {
         videoId: item.id.videoId,
         title: item.snippet.title,
         channel: item.snippet.channelTitle,
-        thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+        thumbnail:
+          item.snippet.thumbnails.medium?.url ||
+          item.snippet.thumbnails.default?.url,
         duration: durationMap[item.id.videoId] || "",
       }));
 

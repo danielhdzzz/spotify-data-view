@@ -1,4 +1,4 @@
-const WORKER_URL = "https://youtube-search-proxy.danielhdzzz.workers.dev";
+const WORKER_URL = "https://youtube-search-proxy.unsub.workers.dev";
 
 const $ = {
   overlay: document.getElementById("player-overlay"),
@@ -68,10 +68,7 @@ function playVideo(videoId) {
   activeVideoId = videoId;
   $.embed.innerHTML = "";
   const iframe = document.createElement("iframe");
-  iframe.src =
-    "https://www.youtube.com/embed/" +
-    videoId +
-    "?autoplay=1&rel=0";
+  iframe.src = "https://www.youtube.com/embed/" + videoId + "?autoplay=1&rel=0";
   iframe.allow = "autoplay; encrypted-media";
   iframe.allowFullscreen = true;
   $.embed.appendChild(iframe);

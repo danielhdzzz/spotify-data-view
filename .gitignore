@@ -1,5 +1,9 @@
 data/
+personal/
 ideas.md
+
+# Cloudflare
+.wrangler/
 
 # Misc
 .DS_Store

@@ -81,7 +81,7 @@ Then redeploy: `wrangler deploy`
 Verify the worker is responding:
 
 ```sh
-curl "https://youtube-search-proxy.<your-subdomain>.workers.dev/search?q=radiohead+creep"
+curl "https://youtube-search-proxy.unsub.workers.dev/search?q=radiohead+creep"
 ```
 
 You should get back JSON with a `results` array containing `videoId`, `title`, `channel`, `thumbnail`, and `duration` fields.
