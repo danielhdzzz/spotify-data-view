@@ -1,4 +1,4 @@
-import { ROW_H, TRACK_ROW_H, RENDER_BUFFER, state, $, selectPlaylist, showArtist, showAlbum, toggleStatsMenu, toggleWrappedMenu, updateMainMeta } from "./app.js";
+import { ROW_H, TRACK_ROW_H, RENDER_BUFFER, GRID_ROW_H, GRID_CARD_W, GRID_GAP, state, $, selectPlaylist, showArtist, showAlbum, toggleStatsMenu, toggleWrappedMenu, updateMainMeta } from "./app.js";
 import { getSettings } from "./settings.js";
 import { openPlayer } from "./player.js";
 import { getAlbumArt } from "./albumart.js";
@@ -430,27 +430,39 @@ export function renderCatalogList() {
   $.emptyState.textContent = "No matches";
   $.viewport.style.display = total === 0 ? "none" : "";
 
-  $.runway.style.height = total * ROW_H + "px";
-
   state.visibleRows.forEach((r) => r.el.remove());
   state.visibleRows = [];
   state.lastScrollTop = -1;
   $.viewport.scrollTop = 0;
-  renderVisibleCatalogRows();
+
+  if (state.albumGridView && state.catalogMode === "albums") {
+    const cols = getGridCols();
+    const rows = Math.ceil(total / cols);
+    $.runway.style.height = rows * GRID_ROW_H + "px";
+    renderVisibleGridRows();
+  } else {
+    const showArt = state.catalogMode === "albums" && getSettings().showAlbumArt;
+    const rowH = showArt ? TRACK_ROW_H : ROW_H;
+    $.runway.style.height = total * rowH + "px";
+    renderVisibleCatalogRows();
+  }
 }
 
 export function renderVisibleCatalogRows() {
   const scrollTop = $.viewport.scrollTop;
   const viewH = $.viewport.clientHeight;
   const total = state.filteredCatalog.length;
+  const isAlbumCatalog = state.catalogMode === "albums";
+  const showArt = isAlbumCatalog && getSettings().showAlbumArt;
+  const rowH = showArt ? TRACK_ROW_H : ROW_H;
 
   const startIdx = Math.max(
     0,
-    Math.floor(scrollTop / ROW_H) - RENDER_BUFFER,
+    Math.floor(scrollTop / rowH) - RENDER_BUFFER,
   );
   const endIdx = Math.min(
     total,
-    Math.ceil((scrollTop + viewH) / ROW_H) + RENDER_BUFFER,
+    Math.ceil((scrollTop + viewH) / rowH) + RENDER_BUFFER,
   );
 
   const needed = new Set();
@@ -465,14 +477,24 @@ export function renderVisibleCatalogRows() {
     return false;
   });
 
-  const isAlbumCatalog = state.catalogMode === "albums";
-
   for (const idx of needed) {
     const item = state.filteredCatalog[idx];
     const row = document.createElement("div");
     row.className = "track-row";
-    row.style.top = idx * ROW_H + "px";
+    row.style.top = idx * rowH + "px";
+    row.style.height = rowH + "px";
     row.style.cursor = "pointer";
+
+    if (showArt && item.sampleTrack) {
+      const artCell = document.createElement("span");
+      artCell.className = "col-art";
+      const img = document.createElement("img");
+      img.alt = "";
+      const cachedUrl = getAlbumArt(item.sampleTrack, (url) => { img.src = url; img.classList.add("loaded"); });
+      if (cachedUrl) { img.src = cachedUrl; img.classList.add("loaded"); }
+      artCell.appendChild(img);
+      row.appendChild(artCell);
+    }
 
     const numSpan = document.createElement("span");
     numSpan.className = "col-num";
@@ -513,6 +535,96 @@ export function renderVisibleCatalogRows() {
     $.runway.appendChild(row);
     state.visibleRows.push({ idx, el: row });
   }
+}
+
+// ── Grid View ──
+function getGridCols() {
+  const usable = $.viewport.clientWidth - GRID_GAP * 2;
+  return Math.max(2, Math.floor((usable + GRID_GAP) / (GRID_CARD_W + GRID_GAP)));
+}
+
+export function renderVisibleGridRows() {
+  const scrollTop = $.viewport.scrollTop;
+  const viewH = $.viewport.clientHeight;
+  const total = state.filteredCatalog.length;
+  const cols = getGridCols();
+  const totalGridRows = Math.ceil(total / cols);
+
+  const startGridRow = Math.max(0, Math.floor(scrollTop / GRID_ROW_H) - RENDER_BUFFER);
+  const endGridRow = Math.min(totalGridRows, Math.ceil((scrollTop + viewH) / GRID_ROW_H) + RENDER_BUFFER);
+
+  const needed = new Set();
+  for (let r = startGridRow; r < endGridRow; r++) needed.add(r);
+
+  state.visibleRows = state.visibleRows.filter((r) => {
+    if (needed.has(r.idx)) {
+      needed.delete(r.idx);
+      return true;
+    }
+    r.el.remove();
+    return false;
+  });
+
+  for (const gridRow of needed) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "album-grid-row";
+    rowEl.style.top = gridRow * GRID_ROW_H + "px";
+
+    const startIdx = gridRow * cols;
+    const endIdx = Math.min(total, startIdx + cols);
+    for (let i = startIdx; i < endIdx; i++) {
+      rowEl.appendChild(makeAlbumCard(state.filteredCatalog[i]));
+    }
+
+    $.runway.appendChild(rowEl);
+    state.visibleRows.push({ idx: gridRow, el: rowEl });
+  }
+}
+
+function makeAlbumCard(item) {
+  const card = document.createElement("div");
+  card.className = "album-card";
+
+  const artWrap = document.createElement("div");
+  artWrap.className = "album-card-art";
+  const img = document.createElement("img");
+  img.alt = "";
+
+  if (item.sampleTrack) {
+    const cachedUrl = getAlbumArt(item.sampleTrack, (url) => {
+      img.src = url;
+      img.classList.add("loaded");
+    });
+    if (cachedUrl) {
+      img.src = cachedUrl;
+      img.classList.add("loaded");
+    }
+  }
+
+  artWrap.appendChild(img);
+  card.appendChild(artWrap);
+
+  const info = document.createElement("div");
+  info.className = "album-card-info";
+
+  const albumName = document.createElement("div");
+  albumName.className = "album-card-name";
+  albumName.textContent = item.name;
+
+  const artistName = document.createElement("div");
+  artistName.className = "album-card-artist";
+  artistName.textContent = item.artist;
+
+  info.appendChild(albumName);
+  info.appendChild(artistName);
+  card.appendChild(info);
+
+  card.addEventListener("click", () => {
+    state.navHistory.push({ type: "catalog", mode: state.catalogMode });
+    showAlbum(item.name, item.artist);
+  });
+
+  return card;
 }
 
 // ── Init (wires up event listeners that belong to render) ──

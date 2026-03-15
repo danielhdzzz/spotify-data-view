@@ -155,7 +155,12 @@ export function buildIndexes() {
 
     const abKey = (album + "|||" + artist).toLowerCase();
     if (!albumMap.has(abKey)) albumMap.set(abKey, { name: album, artist: artist, count: 0 });
-    albumMap.get(abKey).count++;
+    const abEntry = albumMap.get(abKey);
+    abEntry.count++;
+
+    if (!isLocal && uri && !abEntry.sampleTrack) {
+      abEntry.sampleTrack = { album, artist, uri };
+    }
   }
 
   for (const t of state.library.tracks) {

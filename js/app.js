@@ -1,5 +1,5 @@
 import { initData, tryLocalData, buildIndexes, loadSampleData } from "./data.js";
-import { initRender, renderSidebar, renderTrackList, renderCatalogList, renderVisibleRows, renderVisibleCatalogRows, updateSortHeaders } from "./render.js";
+import { initRender, renderSidebar, renderTrackList, renderCatalogList, renderVisibleRows, renderVisibleCatalogRows, renderVisibleGridRows, updateSortHeaders } from "./render.js";
 import { computeStats, renderStatsPage } from "./stats.js";
 import { renderWrappedPage } from "./wrapped.js";
 import { loadSettings, saveSettings, getSettings } from "./settings.js";
@@ -11,6 +11,9 @@ import { initLastFm, isLinked, getAuthUrl, unlinkLastFm } from "./lastfm.js";
 export const ROW_H = 32;
 export let TRACK_ROW_H = 32;
 export const RENDER_BUFFER = 10;
+export const GRID_ROW_H = 220;
+export const GRID_CARD_W = 160;
+export const GRID_GAP = 16;
 
 // ── Shared state ──
 export const state = {
@@ -35,6 +38,7 @@ export const state = {
   wrappedYears: [],
   wrappedOpen: false,
   trackUriIndex: null,
+  albumGridView: true,
 };
 
 // ── DOM refs ──
@@ -78,6 +82,7 @@ export const $ = {
   albumArtToggle: document.getElementById("album-art-toggle"),
   viewList: document.getElementById("view-list"),
   viewArt: document.getElementById("view-art"),
+  viewGrid: document.getElementById("view-grid"),
   linkSpotifyToggle: document.getElementById("link-spotify-toggle"),
   lastfmBtn: document.getElementById("lastfm-btn"),
 };
@@ -211,6 +216,9 @@ export function showAllPlaylistTracks() {
   $.dedupToggle.checked = true;
   $.exportCsvBtn.classList.add("visible");
   $.exportTxtBtn.classList.add("visible");
+  $.viewGrid.style.display = "none";
+  $.viewArt.style.display = "";
+  $.viewList.style.display = "";
 
   const allTracks = filterLocalTracks(normalizeLibraryTracks(state.library.tracks))
     .map((t) => ({ ...t, source: "Liked Songs" }));
@@ -276,7 +284,9 @@ export function showPlaylist(id) {
   $.dedupToggle.checked = false;
   $.exportCsvBtn.classList.add("visible");
   $.exportTxtBtn.classList.add("visible");
-
+  $.viewGrid.style.display = "none";
+  $.viewArt.style.display = "";
+  $.viewList.style.display = "";
 
   if (id === "liked") {
     $.mainTitle.textContent = "Liked Songs";
@@ -318,6 +328,21 @@ export function showCatalogList(mode) {
   $.dedupLabel.style.display = "none";
   $.dedupToggle.checked = false;
 
+  // View toggle visibility
+  if (mode === "albums") {
+    $.viewGrid.style.display = "";
+    $.viewArt.style.display = "";
+    $.viewList.style.display = "";
+    const art = getSettings().showAlbumArt;
+    $.viewGrid.classList.toggle("active", state.albumGridView);
+    $.viewArt.classList.toggle("active", !state.albumGridView && art);
+    $.viewList.classList.toggle("active", !state.albumGridView && !art);
+  } else {
+    $.viewGrid.style.display = "none";
+    $.viewArt.style.display = "none";
+    $.viewList.style.display = "none";
+  }
+
   state.catalogItems = index;
   state.filteredCatalog = index.slice();
   state.currentTracks = [];
@@ -336,6 +361,10 @@ export function showDetailView(title, meta, tracks) {
   $.backBtn.style.display = "block";
   $.exportCsvBtn.classList.remove("visible");
   $.exportTxtBtn.classList.remove("visible");
+
+  $.viewGrid.style.display = "none";
+  $.viewArt.style.display = "";
+  $.viewList.style.display = "";
 
   $.trackFilterWrap.style.display = "";
   $.colHeader.style.display = "";
@@ -500,9 +529,21 @@ document.addEventListener("keydown", (e) => {
 // ── Scroll ──
 $.viewport.addEventListener("scroll", () => {
   requestAnimationFrame(() => {
-    if (state.catalogMode) renderVisibleCatalogRows();
+    if (state.albumGridView && state.catalogMode === "albums") renderVisibleGridRows();
+    else if (state.catalogMode) renderVisibleCatalogRows();
     else renderVisibleRows();
   });
+});
+
+// ── Resize (grid reflow) ──
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (state.albumGridView && state.catalogMode === "albums") {
+      renderCatalogList();
+    }
+  }, 150);
 });
 
 // ── Sidebar Search ──
@@ -625,13 +666,29 @@ initLastFm().then(() => updateLastfmUI());
 
 function setViewMode(showArt) {
   const s = getSettings();
-  if (s.showAlbumArt === showArt) return;
+  if (s.showAlbumArt === showArt && !state.albumGridView) return;
   s.showAlbumArt = showArt;
   saveSettings(s);
+  if (state.albumGridView && state.catalogMode === "albums") {
+    state.albumGridView = false;
+    $.viewGrid.classList.remove("active");
+    $.viewArt.classList.toggle("active", showArt);
+    $.viewList.classList.toggle("active", !showArt);
+    renderCatalogList();
+    return;
+  }
   applyAlbumArt();
 }
 $.viewList.addEventListener("click", () => setViewMode(false));
 $.viewArt.addEventListener("click", () => setViewMode(true));
+$.viewGrid.addEventListener("click", () => {
+  if (state.albumGridView) return;
+  state.albumGridView = true;
+  $.viewGrid.classList.add("active");
+  $.viewArt.classList.remove("active");
+  $.viewList.classList.remove("active");
+  renderCatalogList();
+});
 
 $.hideLocalToggle.addEventListener("change", () => {
   const s = getSettings();
