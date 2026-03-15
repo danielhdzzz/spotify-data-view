@@ -6,6 +6,19 @@ import { parseWrappedFile } from "./wrapped.js";
 
 // ── Data Loading ──
 export async function tryLocalData() {
+  // Try cache first to avoid unnecessary 404s
+  const cached = await getCachedData();
+  if (cached) {
+    processData(cached.libData, cached.playlistFiles, cached.wrappedFiles || []);
+    return;
+  }
+
+  if (!localStorage.getItem("hasLocalData")) {
+    $.loading.classList.add("hidden");
+    $.uploadScreen.style.display = "flex";
+    return;
+  }
+
   try {
     const res = await fetch("data/YourLibrary.json");
     if (!res.ok) throw new Error("not found");
@@ -23,7 +36,8 @@ export async function tryLocalData() {
     }
 
     const wrappedFiles = [];
-    for (let y = 2016; y <= 2030; y++) {
+    const currentYear = new Date().getFullYear();
+    for (let y = 2016; y <= currentYear; y++) {
       try {
         const wr = await fetch("data/Wrapped" + y + ".json");
         if (!wr.ok) continue;
@@ -33,15 +47,12 @@ export async function tryLocalData() {
       }
     }
 
+    localStorage.setItem("hasLocalData", "1");
     processData(libData, playlistFiles, wrappedFiles);
   } catch {
-    const cached = await getCachedData();
-    if (cached) {
-      processData(cached.libData, cached.playlistFiles, cached.wrappedFiles || []);
-    } else {
-      $.loading.classList.add("hidden");
-      $.uploadScreen.style.display = "flex";
-    }
+    localStorage.removeItem("hasLocalData");
+    $.loading.classList.add("hidden");
+    $.uploadScreen.style.display = "flex";
   }
 }
 
@@ -50,30 +61,24 @@ export async function loadSampleData() {
   $.loading.classList.remove("hidden");
   const noCache = { cache: "no-store" };
   try {
-    const res = await fetch("sample/YourLibrary.json", noCache);
+    const manifestRes = await fetch("sample/manifest.json", noCache);
+    if (!manifestRes.ok) throw new Error("manifest not found");
+    const manifest = await manifestRes.json();
+
+    const res = await fetch("sample/" + manifest.library, noCache);
     if (!res.ok) throw new Error("not found");
     const libData = await res.json();
 
     const playlistFiles = [];
-    for (let i = 1; i <= 20; i++) {
-      try {
-        const pr = await fetch("sample/Playlist" + i + ".json", noCache);
-        if (!pr.ok) break;
-        playlistFiles.push(await pr.json());
-      } catch {
-        break;
-      }
+    for (const name of manifest.playlists || []) {
+      const pr = await fetch("sample/" + name, noCache);
+      if (pr.ok) playlistFiles.push(await pr.json());
     }
 
     const wrappedFiles = [];
-    for (let y = 2016; y <= 2030; y++) {
-      try {
-        const wr = await fetch("sample/Wrapped" + y + ".json", noCache);
-        if (!wr.ok) continue;
-        wrappedFiles.push({ name: "Wrapped" + y + ".json", data: await wr.json() });
-      } catch {
-        continue;
-      }
+    for (const name of manifest.wrapped || []) {
+      const wr = await fetch("sample/" + name, noCache);
+      if (wr.ok) wrappedFiles.push({ name, data: await wr.json() });
     }
 
     processData(libData, playlistFiles, wrappedFiles, { skipCache: true });

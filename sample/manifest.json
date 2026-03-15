@@ -1,0 +1,5 @@
+{
+  "library": "YourLibrary.json",
+  "playlists": ["Playlist1.json", "Playlist2.json", "Playlist3.json"],
+  "wrapped": ["Wrapped2025.json"]
+}
