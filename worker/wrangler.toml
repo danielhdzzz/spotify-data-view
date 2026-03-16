@@ -1,3 +1,7 @@
 name = "youtube-search-proxy"
 main = "src/index.js"
 compatibility_date = "2024-12-01"
+
+[[kv_namespaces]]
+binding = "YT_CACHE"
+id = "a280f2a58a7540c1bbf8f938f1b0c02d"

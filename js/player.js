@@ -1,7 +1,18 @@
 import { sendNowPlaying, sendScrobble } from "./lastfm.js";
 import { getAlbumArt } from "./albumart.js";
+import { getCachedYTSearch, cacheYTSearch } from "./cache.js";
 
 const WORKER_URL = "https://youtube-search-proxy.unsub.workers.dev";
+
+function normalizeQuery(q) {
+  return q
+    .replace(/\s*[\(\[][^)\]]*(?:feat\.?|ft\.?|with\s)[^)\]]*[\)\]]/gi, "")
+    .replace(/\s*[\(\[][^)\]]*(?:remaster|version|deluxe|edition|edit|live|acoustic|demo|bonus\s*track|explicit|clean)[^)\]]*[\)\]]/gi, "")
+    .replace(/\s+-\s+.+$/, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
 
 const $ = {
   bar: document.getElementById("player-bar"),
@@ -212,31 +223,46 @@ export function openPlayer(track) {
   currentTrack = track;
   resetScrobbleState();
 
-  const query = track.artist + " " + track.name;
-  fetch(WORKER_URL + "/search?q=" + encodeURIComponent(query))
-    .then((res) => {
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.json();
-    })
-    .then((data) => {
-      $.loading.style.display = "none";
-      if (data.error) {
-        showError(data.error);
-        return;
-      }
-      if (!data.results || data.results.length === 0) {
-        showError("No YouTube results found for this track.");
-        return;
-      }
-      const first = data.results[0];
-      currentDuration = parseDurationToSeconds(first.duration);
-      playVideo(first.videoId);
-      renderResults(data.results);
-    })
-    .catch(() => {
-      $.loading.style.display = "none";
-      showError("Could not search YouTube. Try again later.");
-    });
+  const query = normalizeQuery(track.artist + " " + track.name);
+
+  function handleResults(results) {
+    $.loading.style.display = "none";
+    if (!results || results.length === 0) {
+      showError("No YouTube results found for this track.");
+      return;
+    }
+    const first = results[0];
+    currentDuration = parseDurationToSeconds(first.duration);
+    playVideo(first.videoId);
+    renderResults(results);
+  }
+
+  getCachedYTSearch(query).then((cached) => {
+    if (cached) {
+      handleResults(cached);
+      return;
+    }
+    fetch(WORKER_URL + "/search?q=" + encodeURIComponent(query))
+      .then((res) => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then((data) => {
+        if (data.error) {
+          $.loading.style.display = "none";
+          showError(data.error);
+          return;
+        }
+        if (data.results && data.results.length > 0) {
+          cacheYTSearch(query, data.results);
+        }
+        handleResults(data.results);
+      })
+      .catch(() => {
+        $.loading.style.display = "none";
+        showError("Could not search YouTube. Try again later.");
+      });
+  });
 }
 
 export function closePlayer() {
