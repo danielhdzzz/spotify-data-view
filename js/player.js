@@ -27,16 +27,19 @@ const $ = {
 
 // ── YouTube IFrame API ──
 
-const ytReady = new Promise((resolve) => {
-  if (window.YT && window.YT.Player) {
-    resolve();
-    return;
+let _ytReady;
+function ytReady() {
+  if (!_ytReady) {
+    _ytReady = new Promise((resolve) => {
+      if (window.YT && window.YT.Player) { resolve(); return; }
+      window.onYouTubeIframeAPIReady = resolve;
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(tag);
+    });
   }
-  window.onYouTubeIframeAPIReady = resolve;
-  const tag = document.createElement("script");
-  tag.src = "https://www.youtube.com/iframe_api";
-  document.head.appendChild(tag);
-});
+  return _ytReady;
+}
 
 let ytPlayer = null;
 let activeVideoId = null;
@@ -333,7 +336,7 @@ function playVideo(videoId) {
   div.id = "yt-player-target";
   $.embed.appendChild(div);
 
-  ytReady.then(() => {
+  ytReady().then(() => {
     ytPlayer = new YT.Player("yt-player-target", {
       videoId,
       playerVars: { autoplay: 1, rel: 0, controls: 0 },
