@@ -134,7 +134,10 @@ const CACHE_TTL = 60 * 60 * 24 * 90; // 90 days
 function normalizeQuery(q) {
   return q
     .replace(/\s*[\(\[][^)\]]*(?:feat\.?|ft\.?|with\s)[^)\]]*[\)\]]/gi, "")
-    .replace(/\s*[\(\[][^)\]]*(?:remaster|version|deluxe|edition|edit|live|acoustic|demo|bonus\s*track|explicit|clean)[^)\]]*[\)\]]/gi, "")
+    .replace(
+      /\s*[\(\[][^)\]]*(?:remaster|version|deluxe|edition|edit|live|acoustic|demo|bonus\s*track|explicit|clean)[^)\]]*[\)\]]/gi,
+      "",
+    )
     .replace(/\s+-\s+.+$/, "")
     .toLowerCase()
     .trim()
@@ -171,7 +174,7 @@ async function handleSearch(url, env, request, ctx) {
     const searchUrl = new URL("https://www.googleapis.com/youtube/v3/search");
     searchUrl.searchParams.set("part", "snippet");
     searchUrl.searchParams.set("type", "video");
-    searchUrl.searchParams.set("maxResults", "3");
+    searchUrl.searchParams.set("maxResults", "6");
     searchUrl.searchParams.set("q", query);
     searchUrl.searchParams.set("key", apiKey);
 
