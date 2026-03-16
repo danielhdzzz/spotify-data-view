@@ -1443,6 +1443,11 @@ body {
 }
 
 /* ── Player overlay ── */
+.player-header-buttons {
+  display: flex;
+  gap: 4px;
+}
+
 .player-panel {
   width: 640px;
   max-width: 95vw;
@@ -1453,6 +1458,29 @@ body {
   aspect-ratio: 16 / 9;
   border: none;
   display: block;
+}
+
+/* ── Player minimized ── */
+#player-overlay.minimized {
+  background: none;
+  pointer-events: none;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 0 calc(4 * var(--unit)) calc(8 * var(--unit)) 0;
+}
+
+#player-overlay.minimized .player-panel {
+  pointer-events: auto;
+  width: 320px;
+  cursor: pointer;
+}
+
+#player-overlay.minimized .overlay-body {
+  display: none;
+}
+
+#player-overlay.minimized .overlay-header {
+  margin-bottom: 0;
 }
 
 #player-loading {

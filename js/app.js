@@ -4,7 +4,7 @@ import { computeStats, renderStatsPage } from "./stats.js";
 import { renderWrappedPage } from "./wrapped.js";
 import { loadSettings, saveSettings, getSettings } from "./settings.js";
 import { clearCachedData } from "./cache.js";
-import { closePlayer } from "./player.js";
+import { closePlayer, minimizePlayer, restorePlayer, isMinimized } from "./player.js";
 import { initLastFm, isLinked, getAuthUrl, unlinkLastFm } from "./lastfm.js";
 
 // ── Constants ──
@@ -506,8 +506,12 @@ document.addEventListener("keydown", (e) => {
   }
   if (e.key === "Escape") {
     if ($.playerOverlay.style.display !== "none") {
-      $.playerOverlay.style.display = "none";
-      closePlayer();
+      if (isMinimized()) {
+        $.playerOverlay.style.display = "none";
+        closePlayer();
+      } else {
+        minimizePlayer();
+      }
       return;
     }
     const open = [$.settingsOverlay, $.privacyOverlay, $.exportOverlay].find((o) => o.style.display !== "none");
@@ -566,7 +570,36 @@ function wireOverlay(overlay, onClose) {
 wireOverlay($.settingsOverlay);
 wireOverlay($.privacyOverlay);
 wireOverlay($.exportOverlay);
-wireOverlay($.playerOverlay, () => closePlayer());
+// Player overlay — custom wiring (minimize instead of close on backdrop/Esc)
+(function wirePlayerOverlay() {
+  const overlay = $.playerOverlay;
+  const panel = overlay.querySelector(".player-panel");
+  const closeBtn = overlay.querySelector("[title='Close']");
+  const minBtn = document.getElementById("player-minimize");
+
+  const close = () => {
+    overlay.style.display = "none";
+    closePlayer();
+  };
+
+  closeBtn.addEventListener("click", close);
+
+  minBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (isMinimized()) restorePlayer();
+    else minimizePlayer();
+  });
+
+  // Backdrop click: minimize if expanded, ignore if minimized
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay && !isMinimized()) minimizePlayer();
+  });
+
+  // Click minimized bar to restore
+  panel.addEventListener("click", (e) => {
+    if (isMinimized() && !e.target.closest(".overlay-close")) restorePlayer();
+  });
+})();
 
 // ── Album Art ──
 export function applyAlbumArt() {

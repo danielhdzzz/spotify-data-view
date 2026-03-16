@@ -111,6 +111,7 @@ function onStateChange(event) {
 
 export function openPlayer(track) {
   $.overlay.style.display = "";
+  $.overlay.classList.remove("minimized");
   $.title.textContent = track.artist + " \u2014 " + track.name;
   $.embed.innerHTML = "";
   $.results.innerHTML = "";
@@ -156,8 +157,21 @@ export function closePlayer() {
   $.results.innerHTML = "";
   $.loading.style.display = "none";
   $.error.style.display = "none";
+  $.overlay.classList.remove("minimized");
   activeVideoId = null;
   currentTrack = null;
+}
+
+export function minimizePlayer() {
+  $.overlay.classList.add("minimized");
+}
+
+export function restorePlayer() {
+  $.overlay.classList.remove("minimized");
+}
+
+export function isMinimized() {
+  return $.overlay.classList.contains("minimized");
 }
 
 function finalizeCurrentTrack() {
