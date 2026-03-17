@@ -1,11 +1,31 @@
-import { initData, tryLocalData, buildIndexes, loadSampleData } from "./data.js";
-import { initRender, renderSidebar, renderTrackList, renderCatalogList, renderVisibleRows, renderVisibleCatalogRows, renderVisibleGridRows, updateSortHeaders } from "./render.js";
+import {
+  initData,
+  tryLocalData,
+  buildIndexes,
+  loadSampleData,
+} from "./data.js";
+import {
+  initRender,
+  renderSidebar,
+  renderTrackList,
+  renderCatalogList,
+  renderVisibleRows,
+  renderVisibleCatalogRows,
+  renderVisibleGridRows,
+  updateSortHeaders,
+} from "./render.js";
 import { computeStats, renderStatsPage } from "./stats.js";
 import { renderWrappedPage } from "./wrapped.js";
 import { loadSettings, saveSettings, getSettings } from "./settings.js";
 import { clearCachedData } from "./cache.js";
-import { closePlayer, togglePlayPause, isResultsPanelOpen, closeResultsPanel } from "./player.js";
+import {
+  closePlayer,
+  togglePlayPause,
+  isResultsPanelOpen,
+  closeResultsPanel,
+} from "./player.js";
 import { initLastFm, isLinked, getAuthUrl, unlinkLastFm } from "./lastfm.js";
+import { icon } from "./icons.js";
 
 // ── Constants ──
 export const ROW_H = 32;
@@ -150,13 +170,29 @@ function showStatsPage(id) {
 
   if (!cachedStats) cachedStats = computeStats(state);
 
-  const pageMap = { "stats-albums": "albums", "stats-artists": "artists", "stats-overview": "overview", "stats-timeline": "timeline" };
+  const pageMap = {
+    "stats-albums": "albums",
+    "stats-artists": "artists",
+    "stats-overview": "overview",
+    "stats-timeline": "timeline",
+  };
   const page = pageMap[id] || "overview";
-  const titles = { overview: "Overview", artists: "Top Artists", albums: "Top Albums", timeline: "Timeline" };
+  const titles = {
+    overview: "Overview",
+    artists: "Top Artists",
+    albums: "Top Albums",
+    timeline: "Timeline",
+  };
   const metas = {
-    overview: cachedStats.uniqueTracks.toLocaleString() + " unique tracks (deduplicated)",
-    artists: cachedStats.uniqueArtists.toLocaleString() + " unique artists (deduplicated)",
-    albums: cachedStats.uniqueAlbums.toLocaleString() + " unique albums (deduplicated)",
+    overview:
+      cachedStats.uniqueTracks.toLocaleString() +
+      " unique tracks (deduplicated)",
+    artists:
+      cachedStats.uniqueArtists.toLocaleString() +
+      " unique artists (deduplicated)",
+    albums:
+      cachedStats.uniqueAlbums.toLocaleString() +
+      " unique albums (deduplicated)",
     timeline: "Tracks added over time",
   };
   $.statsTitle.textContent = titles[page];
@@ -204,7 +240,9 @@ export function showAllPlaylistTracks() {
   $.statsView.style.display = "none";
   $.main.style.display = "";
 
-  document.querySelectorAll(".sidebar-item").forEach((el) => el.classList.remove("active"));
+  document
+    .querySelectorAll(".sidebar-item")
+    .forEach((el) => el.classList.remove("active"));
 
   $.trackFilterWrap.style.display = "";
   $.colHeader.style.display = "";
@@ -219,8 +257,9 @@ export function showAllPlaylistTracks() {
   $.viewArt.style.display = "";
   $.viewList.style.display = "";
 
-  const allTracks = filterLocalTracks(normalizeLibraryTracks(state.library.tracks))
-    .map((t) => ({ ...t, source: "Liked Songs" }));
+  const allTracks = filterLocalTracks(
+    normalizeLibraryTracks(state.library.tracks),
+  ).map((t) => ({ ...t, source: "Liked Songs" }));
   for (const pl of state.playlists) {
     for (const t of filterLocalTracks(pl.tracks)) {
       allTracks.push({ ...t, source: pl.name });
@@ -245,9 +284,17 @@ export function updateMainMeta() {
     for (const t of state.currentTracks) {
       seen.add(t.uri || (t.name + "|||" + t.artist).toLowerCase());
     }
-    $.mainMeta.textContent = seen.size.toLocaleString() + " unique tracks across liked songs + " + n + " playlists";
+    $.mainMeta.textContent =
+      seen.size.toLocaleString() +
+      " unique tracks across liked songs + " +
+      n +
+      " playlists";
   } else {
-    $.mainMeta.textContent = state.currentTracks.length.toLocaleString() + " tracks across liked songs + " + n + " playlists";
+    $.mainMeta.textContent =
+      state.currentTracks.length.toLocaleString() +
+      " tracks across liked songs + " +
+      n +
+      " playlists";
   }
 }
 
@@ -289,7 +336,9 @@ export function showPlaylist(id) {
 
   if (id === "liked") {
     $.mainTitle.textContent = "Liked Songs";
-    state.currentTracks = filterLocalTracks(normalizeLibraryTracks(state.library.tracks));
+    state.currentTracks = filterLocalTracks(
+      normalizeLibraryTracks(state.library.tracks),
+    );
     $.mainMeta.textContent = state.currentTracks.length + " tracks";
   } else {
     const pl = state.playlists.find((p) => p.id === id);
@@ -503,7 +552,10 @@ document.addEventListener("keydown", (e) => {
     $.trackFilter.focus();
     $.trackFilter.select();
   }
-  if (e.key === " " && !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) {
+  if (
+    e.key === " " &&
+    !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)
+  ) {
     e.preventDefault();
     togglePlayPause();
     return;
@@ -513,7 +565,9 @@ document.addEventListener("keydown", (e) => {
       closeResultsPanel();
       return;
     }
-    const open = [$.settingsOverlay, $.privacyOverlay, $.exportOverlay].find((o) => o.style.display !== "none");
+    const open = [$.settingsOverlay, $.privacyOverlay, $.exportOverlay].find(
+      (o) => o.style.display !== "none",
+    );
     if (open) {
       open.style.display = "none";
     } else if (document.activeElement === $.sidebarSearch) {
@@ -532,7 +586,8 @@ document.addEventListener("keydown", (e) => {
 // ── Scroll ──
 $.viewport.addEventListener("scroll", () => {
   requestAnimationFrame(() => {
-    if (state.albumGridView && state.catalogMode === "albums") renderVisibleGridRows();
+    if (state.albumGridView && state.catalogMode === "albums")
+      renderVisibleGridRows();
     else if (state.catalogMode) renderVisibleCatalogRows();
     else renderVisibleRows();
   });
@@ -721,12 +776,12 @@ document.getElementById("library-title").addEventListener("click", () => {
 // ── Export ──
 const EXPORT_COLUMNS = [
   { key: "playlist", label: "Playlist", header: "Playlist Name" },
-  { key: "name",     label: "Title",    header: "Track Name" },
-  { key: "artist",   label: "Artist",   header: "Artist" },
-  { key: "album",    label: "Album",    header: "Album" },
-  { key: "source",   label: "Source",   header: "Source" },
-  { key: "uri",      label: "Spotify URI", header: "Spotify URI" },
-  { key: "date",     label: "Date Added",  header: "Date Added" },
+  { key: "name", label: "Title", header: "Track Name" },
+  { key: "artist", label: "Artist", header: "Artist" },
+  { key: "album", label: "Album", header: "Album" },
+  { key: "source", label: "Source", header: "Source" },
+  { key: "uri", label: "Spotify URI", header: "Spotify URI" },
+  { key: "date", label: "Date Added", header: "Date Added" },
 ];
 
 function csvEscape(val) {
@@ -756,7 +811,9 @@ function getTrackValue(track, key) {
 
 function getAllTracks() {
   const tracks = [];
-  const likedTracks = filterLocalTracks(normalizeLibraryTracks(state.library.tracks));
+  const likedTracks = filterLocalTracks(
+    normalizeLibraryTracks(state.library.tracks),
+  );
   for (const t of likedTracks) {
     tracks.push({ playlist: "Liked Songs", ...t });
   }
@@ -787,15 +844,30 @@ function openExportOverlay(format, scope) {
     let checked = false;
 
     if (col.key === "playlist") {
-      if (isGlobal) { available = true; checked = true; }
-    } else if (col.key === "name" || col.key === "artist" || col.key === "album") {
-      available = true; checked = true;
+      if (isGlobal) {
+        available = true;
+        checked = true;
+      }
+    } else if (
+      col.key === "name" ||
+      col.key === "artist" ||
+      col.key === "album"
+    ) {
+      available = true;
+      checked = true;
     } else if (col.key === "source") {
-      if (isAllTracks && !isGlobal) { available = true; checked = false; }
+      if (isAllTracks && !isGlobal) {
+        available = true;
+        checked = false;
+      }
     } else if (col.key === "uri") {
-      available = true; checked = true;
+      available = true;
+      checked = true;
     } else if (col.key === "date") {
-      if (!isGlobal && hasDates) { available = true; checked = false; }
+      if (!isGlobal && hasDates) {
+        available = true;
+        checked = false;
+      }
     }
 
     if (available) columns.push({ ...col, checked });
@@ -832,8 +904,15 @@ function executePlaylistExport(format, selectedKeys) {
     }
     downloadFile(rows.join("\n"), filename, "text/csv;charset=utf-8");
   } else {
-    const keys = EXPORT_COLUMNS.filter((c) => selectedKeys.includes(c.key)).map((c) => c.key);
-    const lines = tracks.map((t) => keys.map((k) => getTrackValue(t, k)).filter(Boolean).join(" - "));
+    const keys = EXPORT_COLUMNS.filter((c) => selectedKeys.includes(c.key)).map(
+      (c) => c.key,
+    );
+    const lines = tracks.map((t) =>
+      keys
+        .map((k) => getTrackValue(t, k))
+        .filter(Boolean)
+        .join(" - "),
+    );
     downloadFile(lines.join("\n"), filename, "text/plain;charset=utf-8");
   }
 }
@@ -852,7 +931,9 @@ function executeGlobalExport(format, selectedKeys) {
     downloadFile(rows.join("\n"), filename, "text/csv;charset=utf-8");
   } else {
     const hasPlaylist = selectedKeys.includes("playlist");
-    const valueKeys = EXPORT_COLUMNS.filter((c) => selectedKeys.includes(c.key) && c.key !== "playlist").map((c) => c.key);
+    const valueKeys = EXPORT_COLUMNS.filter(
+      (c) => selectedKeys.includes(c.key) && c.key !== "playlist",
+    ).map((c) => c.key);
     if (hasPlaylist) {
       let currentPlaylist = null;
       const lines = [];
@@ -863,11 +944,21 @@ function executeGlobalExport(format, selectedKeys) {
           lines.push("");
           currentPlaylist = t.playlist;
         }
-        lines.push(valueKeys.map((k) => getTrackValue(t, k)).filter(Boolean).join(" - "));
+        lines.push(
+          valueKeys
+            .map((k) => getTrackValue(t, k))
+            .filter(Boolean)
+            .join(" - "),
+        );
       }
       downloadFile(lines.join("\n"), filename, "text/plain;charset=utf-8");
     } else {
-      const lines = tracks.map((t) => valueKeys.map((k) => getTrackValue(t, k)).filter(Boolean).join(" - "));
+      const lines = tracks.map((t) =>
+        valueKeys
+          .map((k) => getTrackValue(t, k))
+          .filter(Boolean)
+          .join(" - "),
+      );
       downloadFile(lines.join("\n"), filename, "text/plain;charset=utf-8");
     }
   }
@@ -899,12 +990,16 @@ $.exportTxtBtn.addEventListener("click", () => {
   openExportOverlay("txt", "playlist");
 });
 
-document.querySelectorAll(".export-all-csv-btn").forEach((btn) =>
-  btn.addEventListener("click", () => openExportOverlay("csv", "global")),
-);
-document.querySelectorAll(".export-all-txt-btn").forEach((btn) =>
-  btn.addEventListener("click", () => openExportOverlay("txt", "global")),
-);
+document
+  .querySelectorAll(".export-all-csv-btn")
+  .forEach((btn) =>
+    btn.addEventListener("click", () => openExportOverlay("csv", "global")),
+  );
+document
+  .querySelectorAll(".export-all-txt-btn")
+  .forEach((btn) =>
+    btn.addEventListener("click", () => openExportOverlay("txt", "global")),
+  );
 
 // ── Mobile overlay ──
 document.getElementById("mobile-dismiss").addEventListener("click", () => {
@@ -914,6 +1009,15 @@ document.getElementById("mobile-dismiss").addEventListener("click", () => {
 // ── Sample Library ──
 document.getElementById("sample-btn").addEventListener("click", () => {
   loadSampleData();
+});
+
+// ── Icons ──
+$.backBtn.innerHTML = icon("arrow-left", 14) + " back";
+$.viewGrid.innerHTML = icon("layout-grid", 16);
+$.viewArt.innerHTML = icon("layout-list", 16);
+$.viewList.innerHTML = icon("list", 16);
+document.querySelectorAll(".overlay-close").forEach((btn) => {
+  btn.innerHTML = icon("x", 16);
 });
 
 // ── Init ──

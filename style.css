@@ -160,13 +160,22 @@ body {
   flex-shrink: 0;
 }
 
+/* ── SVG icons ── */
+.icon {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
 /* ── Sidebar collapsible group ── */
 .sidebar-group-toggle {
   user-select: none;
 }
 
 .sidebar-group-arrow {
-  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
   color: var(--text-dim);
   flex-shrink: 0;
   transition: transform 0.15s;
@@ -495,9 +504,12 @@ body {
   width: 100%;
   height: 100%;
   border-radius: 0;
-  font-size: 16px;
   color: #fff;
   background: rgba(0, 0, 0, 0.3);
+}
+.col-art .play-btn .icon {
+  width: 16px;
+  height: 16px;
 }
 .col-art:hover img.loaded {
   opacity: 0.6;
@@ -705,7 +717,6 @@ body {
   background: none;
   border: none;
   color: var(--text-dim);
-  font-size: 10px;
   cursor: pointer;
   padding: 0;
   width: 22px;

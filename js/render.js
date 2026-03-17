@@ -1,6 +1,7 @@
 import { ROW_H, TRACK_ROW_H, RENDER_BUFFER, GRID_ROW_H, GRID_CARD_W, GRID_GAP, state, $, selectPlaylist, showArtist, showAlbum, toggleStatsMenu, toggleWrappedMenu, updateMainMeta } from "./app.js";
 import { getSettings } from "./settings.js";
 import { openPlayer, setOnTrackEnded, setOnPrevTrack, isShuffle } from "./player.js";
+import { icon } from "./icons.js";
 
 setOnTrackEnded((track) => {
   const list = state.filteredTracks;
@@ -70,7 +71,7 @@ export function renderSidebar(filter) {
     toggleName.textContent = "Stats";
     const arrow = document.createElement("span");
     arrow.className = "sidebar-group-arrow";
-    arrow.textContent = "\u25B8";
+    arrow.innerHTML = icon('chevron-right', 12);
     toggle.appendChild(toggleName);
     toggle.appendChild(arrow);
     toggle.addEventListener("click", () => {
@@ -120,7 +121,7 @@ export function renderSidebar(filter) {
       wToggleName.textContent = "Wrapped";
       const wArrow = document.createElement("span");
       wArrow.className = "sidebar-group-arrow";
-      wArrow.textContent = "\u25B8";
+      wArrow.innerHTML = icon('chevron-right', 12);
       wToggle.appendChild(wToggleName);
       wToggle.appendChild(wArrow);
       wToggle.addEventListener("click", () => {
@@ -416,7 +417,7 @@ export function renderVisibleRows() {
     playCell.className = "col-play";
     const playBtn = document.createElement("button");
     playBtn.className = "play-btn";
-    playBtn.textContent = "\u25B6";
+    playBtn.innerHTML = icon('play', 12);
     playBtn.title = "Play on YouTube";
     playBtn.addEventListener("click", (e) => {
       e.stopPropagation();

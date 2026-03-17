@@ -1,6 +1,7 @@
 import { sendNowPlaying, sendScrobble } from "./lastfm.js";
 import { getAlbumArt } from "./albumart.js";
 import { getCachedYTSearch, cacheYTSearch } from "./cache.js";
+import { icon } from "./icons.js";
 
 const WORKER_URL = "https://youtube-search-proxy.unsub.workers.dev";
 
@@ -35,6 +36,15 @@ const $ = {
   resultsPanel: document.getElementById("player-results-panel"),
   resultsClose: document.getElementById("player-results-close"),
 };
+
+// ── Set initial button icons ──
+$.prevBtn.innerHTML = icon('skip-back', 18);
+$.playPause.innerHTML = icon('play', 18);
+$.nextBtn.innerHTML = icon('skip-forward', 18);
+$.shuffleBtn.innerHTML = icon('shuffle', 18);
+$.videoToggle.innerHTML = icon('tv', 16);
+$.closeBtn.innerHTML = icon('x', 16);
+$.resultsClose.innerHTML = icon('x', 16);
 
 // ── YouTube IFrame API ──
 
@@ -155,7 +165,7 @@ function onStateChange(event) {
   switch (event.data) {
     case YT.PlayerState.PLAYING:
       playStartTime = Date.now();
-      $.playPause.innerHTML = "&#x23F8;";
+      $.playPause.innerHTML = icon('pause', 18);
       startProgressLoop();
       if (!nowPlayingSent && currentTrack) {
         nowPlayingSent = true;
@@ -167,7 +177,7 @@ function onStateChange(event) {
       }
       break;
     case YT.PlayerState.PAUSED:
-      $.playPause.innerHTML = "&#x25B6;";
+      $.playPause.innerHTML = icon('play', 18);
       accumulate();
       checkScrobble();
       stopProgressLoop();
@@ -177,7 +187,7 @@ function onStateChange(event) {
       checkScrobble();
       break;
     case YT.PlayerState.ENDED:
-      $.playPause.innerHTML = "&#x25B6;";
+      $.playPause.innerHTML = icon('play', 18);
       accumulate();
       checkScrobble();
       stopProgressLoop();
@@ -200,7 +210,7 @@ export function openPlayer(track) {
   $.results.innerHTML = "";
   $.error.style.display = "none";
   $.loading.style.display = "";
-  $.playPause.innerHTML = "&#x25B6;";
+  $.playPause.innerHTML = icon('play', 18);
   $.progressFill.style.width = "0%";
   $.seek.value = 0;
   $.time.textContent = "0:00 / 0:00";
