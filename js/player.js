@@ -35,6 +35,7 @@ const $ = {
   videoToggle: document.getElementById("player-video-toggle"),
   resultsPanel: document.getElementById("player-results-panel"),
   resultsClose: document.getElementById("player-results-close"),
+  resultsExpand: document.getElementById("player-results-expand"),
 };
 
 // ── Set initial button icons ──
@@ -44,6 +45,7 @@ $.nextBtn.innerHTML = icon('skip-forward', 18);
 $.shuffleBtn.innerHTML = icon('shuffle', 18);
 $.videoToggle.innerHTML = icon('tv', 16);
 $.closeBtn.innerHTML = icon('x', 16);
+$.resultsExpand.innerHTML = icon('maximize', 16);
 $.resultsClose.innerHTML = icon('x', 16);
 
 // ── YouTube IFrame API ──
@@ -214,6 +216,9 @@ export function openPlayer(track) {
   $.progressFill.style.width = "0%";
   $.seek.value = 0;
   $.time.textContent = "0:00 / 0:00";
+  $.resultsPanel.classList.remove("expanded");
+  $.resultsExpand.innerHTML = icon('maximize', 16);
+  $.resultsExpand.title = "Expand video";
   if (!panelDismissed) {
     $.resultsPanel.style.display = "";
     $.videoToggle.classList.add("active");
@@ -325,8 +330,21 @@ export function isResultsPanelOpen() {
   return $.resultsPanel.style.display !== "none";
 }
 
+export function isResultsPanelExpanded() {
+  return $.resultsPanel.classList.contains("expanded");
+}
+
+export function collapseResultsPanel() {
+  $.resultsPanel.classList.remove("expanded");
+  $.resultsExpand.innerHTML = icon('maximize', 16);
+  $.resultsExpand.title = "Expand video";
+}
+
 export function closeResultsPanel() {
   $.resultsPanel.style.display = "none";
+  $.resultsPanel.classList.remove("expanded");
+  $.resultsExpand.innerHTML = icon('maximize', 16);
+  $.resultsExpand.title = "Expand video";
   $.videoToggle.classList.remove("active");
   panelDismissed = true;
 }
@@ -439,6 +457,13 @@ $.videoToggle.addEventListener("click", () => {
 });
 
 $.resultsClose.addEventListener("click", closeResultsPanel);
+
+$.resultsExpand.addEventListener("click", () => {
+  const expanded = $.resultsPanel.classList.toggle("expanded");
+  $.resultsExpand.innerHTML = icon(expanded ? 'minimize' : 'maximize', 16);
+  $.resultsExpand.title = expanded ? "Normal view" : "Expand video";
+});
+
 
 // ── Seek ──
 

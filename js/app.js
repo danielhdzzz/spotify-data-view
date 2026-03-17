@@ -22,6 +22,8 @@ import {
   closePlayer,
   togglePlayPause,
   isResultsPanelOpen,
+  isResultsPanelExpanded,
+  collapseResultsPanel,
   closeResultsPanel,
 } from "./player.js";
 import { initLastFm, isLinked, getAuthUrl, unlinkLastFm } from "./lastfm.js";
@@ -561,6 +563,10 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   if (e.key === "Escape") {
+    if (isResultsPanelExpanded()) {
+      collapseResultsPanel();
+      return;
+    }
     if (isResultsPanelOpen()) {
       closeResultsPanel();
       return;
