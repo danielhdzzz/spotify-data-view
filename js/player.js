@@ -383,6 +383,7 @@ function playVideo(videoId) {
 
   ytReady().then(() => {
     ytPlayer = new YT.Player("yt-player-target", {
+      host: "https://www.youtube-nocookie.com",
       videoId,
       playerVars: { autoplay: 1, rel: 0, controls: 1 },
       events: { onStateChange },
